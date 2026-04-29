@@ -1,25 +1,27 @@
+import json
 import unittest
 from pathlib import Path
 from atlas.main import run_pipeline
 
 class PipelineTests(unittest.TestCase):
-    def test_v08_outputs(self):
+    def test_v09_business_outputs(self):
         run_pipeline()
-        self.assertTrue(Path('atlas/config/real_sources.yaml').exists())
-        self.assertTrue(Path('atlas/runtime/export/real_leads_only.csv').exists())
-        self.assertTrue(Path('atlas/runtime/export/artisans_ranked.csv').exists())
-        self.assertIn('Rapport V0.8', Path('atlas/runtime/reports/lead_report.md').read_text(encoding='utf-8'))
-        sheet=Path('atlas/runtime/closer/daily_call_sheet.md').read_text(encoding='utf-8')
-        self.assertIn('À appeler aujourd’hui - leads réels seulement', sheet)
-        self.assertIn('Démo uniquement - ne pas appeler', sheet)
+        self.assertTrue(Path('atlas/runtime/business/business_readiness.json').exists())
+        self.assertTrue(Path('atlas/runtime/closer/call_scripts.md').exists())
+        self.assertTrue(Path('atlas/scripts/business_check.sh').exists())
 
-    def test_private_sources_disabled(self):
-        y=Path('atlas/config/real_sources.yaml').read_text(encoding='utf-8')
-        self.assertIn('source_id: pagesjaunes', y)
-        self.assertIn('collection_mode: disabled', y)
+    def test_no_demo_in_business_ready(self):
+        run_pipeline()
+        data=json.loads(Path('atlas/runtime/export/leads_ranked.json').read_text(encoding='utf-8'))['leads']
+        ready=[l for l in data if l.get('qualification_status')=='BUSINESS_READY']
+        self.assertTrue(all(l.get('reality_status')!='DEMO' for l in ready))
 
-    def test_source_audit_exists(self):
-        self.assertTrue(Path('atlas/scripts/source_audit.sh').exists())
+    def test_caps_and_intent_guards(self):
+        run_pipeline()
+        data=json.loads(Path('atlas/runtime/export/leads_ranked.json').read_text(encoding='utf-8'))['leads']
+        for l in data:
+            if l.get('intent_type') in {'DIRECTORY_PAGE','ARTISAN_AD'}:
+                self.assertNotEqual(l.get('qualification_status'),'BUSINESS_READY')
 
 if __name__ == '__main__':
     unittest.main()
