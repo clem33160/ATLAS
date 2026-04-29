@@ -1,0 +1,2 @@
+id,title,description,city,zip_code,trade_hint,budget_eur,urgency,source,confidence,pipeline_status
+manual-002,"Chaudière capricieuse","Bruits fréquents, devis souhaité",Marseille,13002,chauffage,6400,urgent,inbox_manual,0.81,NOUVEAU
