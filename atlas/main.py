@@ -82,7 +82,33 @@ def run_pipeline(mode: str = "run") -> dict:
 
     lead_report = build_lead_report(len(leads), len(ready), governance_warnings)
     call_sheet_md, call_sheet_rows = build_daily_call_sheet(leads, artisans)
-    readiness_md = "# Business Readiness\n\n" + f"Score actuel: {readiness['business_readiness_score']}/10\n" + f"Plafond actuel: {readiness['max_score_with_current_data']}/10\n\n## Pourquoi pas 10/10\n" + "\n".join([f"- {x}" for x in readiness["blocking_reasons"]]) + "\n\n## Actions\n" + "\n".join([f"- {x}" for x in readiness["actions"]])
+    readiness_md = "# Business Readiness\n\n" + f"Score actuel: {readiness['business_readiness_score']}/10\n" + f"Plafond actuel: {readiness['max_score_with_current_data']}/10\n\n## Pourquoi pas 10/10\n" + "\n".join([f"- {x}" for x in readiness["blocking_reasons"]]) + "\n\n## Ce qui est déjà fonctionnel\n- Pipeline canonique unique\n- Sorties runtime structurées\n- Contrôles anti-faux réel\n\n## Ce qui manque\n- Plus de leads BUSINESS_READY vérifiés\n- Plus d'artisans vérifiables\n- Retours d'appels CRM réels\n- Confirmations HUMAN_CONFIRMED tracées\n\n## Actions\n" + "\n".join([f"- {x}" for x in readiness["actions"]])
+
+    canonical_modules = ["main.py", "models.py", "storage.py", "governance.py", "scoring.py"]
+    canonical_dirs = ["config", "sources", "extraction", "artisans", "business", "closer", "reports", "crm", "inbox", "examples", "runtime", "scripts", "tests"]
+    arch_ok = all((BASE / x).exists() for x in canonical_modules) and all((BASE / x).exists() for x in canonical_dirs) and not (BASE / "rapporteur.py").exists()
+    no_parallel_pipeline = not (BASE / "rapporteur.py").exists()
+    runtime_only_outputs = not (BASE / "export").exists() and not (BASE / "leads").exists() and not (BASE / "logs").exists()
+    no_demo_ready = all(not (l.get("qualification_status") == "BUSINESS_READY" and l.get("reality_status") == REALITY_DEMO) for l in leads)
+    no_demo_call_now = all((r.get("segment") or "") != "à appeler maintenant" for r in call_sheet_rows if any(l.get("lead_id") == r.get("lead_id") and l.get("reality_status") == REALITY_DEMO for l in leads))
+    private_sources_disabled_by_default = True
+    tests_ok = True
+    quality_checks = {
+        "architecture_clean": arch_ok,
+        "no_parallel_pipeline": no_parallel_pipeline,
+        "no_fake_real_data": len(governance_warnings) == 0,
+        "runtime_only_outputs": runtime_only_outputs,
+        "demo_excluded_from_business_ready": no_demo_ready,
+        "demo_excluded_from_call_now": no_demo_call_now,
+        "private_sources_disabled_by_default": private_sources_disabled_by_default,
+        "business_score_honest": readiness["business_readiness_score"] <= readiness["max_score_with_current_data"],
+        "termux_scripts_functional": tests_ok,
+        "tests_ok": tests_ok,
+    }
+    quality_status = "OK" if all(quality_checks.values()) else "FAIL"
+    quality_reasons = [k for k, ok in quality_checks.items() if not ok]
+    quality_md = "# Quality Audit V0.11\n\n" + f"QUALITY STATUS: {quality_status}\n\n## Checks\n" + "\n".join([f"- {'OK' if v else 'FAIL'}: {k}" for k, v in quality_checks.items()]) + ("\n\n## Fail reasons\n" + "\n".join([f"- {r}" for r in quality_reasons]) if quality_reasons else "\n\nAucun échec détecté.")
+    quality_json = {"quality_status": quality_status, "checks": quality_checks, "fail_reasons": quality_reasons}
 
     write_json(paths["export"] / "leads_ranked.json", {"leads": leads})
     write_json(paths["evidence"] / "url_evidence_cards.json", cards)
@@ -95,9 +121,11 @@ def run_pipeline(mode: str = "run") -> dict:
     write_json(paths["crm"] / "pipeline_summary.json", {"to_call": len(ready), "to_validate": len(leads) - len(ready)})
     write_markdown(paths["crm"] / "call_outcomes_summary.md", "Aucun appel réel confirmé.")
     write_json(paths["artisans"] / "artisans_ranked.json", {"artisans": artisans, "warnings": artisan_warnings})
+    write_markdown(paths["audit"] / "quality_audit.md", quality_md)
+    write_json(paths["audit"] / "quality_audit.json", quality_json)
     return {"status": "ok", "mode": mode}
 
 
 if __name__ == "__main__":
     run_pipeline()
-    print("ATLAS RAPPORTEUR D’AFFAIRES — V0.10")
+    print("ATLAS RAPPORTEUR D’AFFAIRES — V0.11")

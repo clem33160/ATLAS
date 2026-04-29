@@ -1,12 +1,16 @@
-# Atlas Rapporteur d’Affaires V0.10 — Nettoyage canonique et qualité code
+# Atlas Rapporteur d’Affaires V0.11 — Verrouillage canonique qualité
 
-La V0.10 stabilise l’existant : architecture claire, responsabilités séparées, pipeline lisible, tests renforcés.
+La V0.11 verrouille la base : architecture canonique, qualité vérifiable, non-invention, stabilité Termux.
 
-- V0.10 **n’ajoute pas de gros nouveau scraping**.
+- V0.11 **n’ajoute pas de grosse nouvelle fonctionnalité**.
 - Atlas **ne produit pas encore automatiquement 50 vrais leads/jour**.
 - **50 leads/jour** reste un objectif futur.
-- Un business 10/10 exige : URLs réelles, artisans vérifiables, retours d’appels, validation humaine.
+- Un business 10/10 exige : vraies URLs précises, preuves exploitables, artisans vérifiables, retours d’appels, validations humaines.
 - Les données DEMO ne doivent jamais être appelées ni vendues comme réelles.
+- Atlas ne contacte personne automatiquement.
+- Atlas ne spamme pas.
+- Atlas ne contourne pas les protections.
+- Atlas prépare seulement les opportunités.
 
 ## Règles anti-faux réel
 
@@ -44,4 +48,5 @@ chmod +x ./atlas/scripts/*.sh
 sed -n '1,420p' atlas/runtime/reports/lead_report.md
 sed -n '1,360p' atlas/runtime/closer/daily_call_sheet.md
 sed -n '1,260p' atlas/runtime/business/business_readiness.md
+sed -n '1,240p' atlas/runtime/audit/quality_audit.md
 ```

@@ -6,7 +6,7 @@ from pathlib import Path
 
 def ensure_runtime_dirs(base: Path) -> dict[str, Path]:
     runtime = base / "runtime"
-    paths = {name: runtime / name for name in ["reports", "export", "closer", "crm", "matching", "evidence", "artisans", "business"]}
+    paths = {name: runtime / name for name in ["reports", "export", "closer", "crm", "matching", "evidence", "artisans", "business", "audit"]}
     for p in paths.values():
         p.mkdir(parents=True, exist_ok=True)
     return {"runtime": runtime, **paths}
