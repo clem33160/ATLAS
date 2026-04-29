@@ -1,233 +1,153 @@
 #!/usr/bin/env python3
-"""Atlas Rapporteur d’Affaires - V0.6."""
 from __future__ import annotations
-
-import csv
-import json
-import re
-import unicodedata
+import csv, json, re
 from collections import Counter
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from atlas.sources.http_fetcher import fetch_public_url, extract_text_from_html, normalize_web_text, safe_excerpt
+from atlas.extraction import extract_signals
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 INBOX_DIR = BASE_DIR / "inbox"
 RUNTIME_DIR = BASE_DIR / "runtime"
-EXAMPLES_DIR = BASE_DIR / "examples"
 
-STATUS_NEW = "NOUVEAU"
-PIPELINE_STATUSES = {"NOUVEAU", "À_APPELER", "APPELÉ", "INTÉRESSÉ", "À_RELANCER", "DEAL_POTENTIEL", "SIGNÉ", "PERDU", "ARCHIVE"}
-CALL_STATUSES = {"NON_APPELÉ", "APPELÉ_SANS_RÉPONSE", "CONTACTÉ", "INTÉRESSÉ", "PAS_INTÉRESSÉ", "À_RELANCER", "SIGNÉ", "PERDU"}
+REALITY = {"DEMO","MANUAL","COLLECTED_FROM_URL","PARTIALLY_VERIFIED","HUMAN_CONFIRMED","ARCHIVED"}
 
 
-def strip_accents(value: str) -> str:
-    return "".join(c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c))
+def now_iso() -> str: return datetime.now(timezone.utc).isoformat()
+def load_json(p: Path): return json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
+def load_csv(p: Path):
+    if not p.exists(): return []
+    with p.open("r", encoding="utf-8", newline="") as fh: return list(csv.DictReader(fh))
 
 
-def normalize_city(city: str) -> str:
-    cleaned = strip_accents((city or "").strip().lower())
-    mapping = {"lyon": "Lyon", "marseille": "Marseille", "toulouse": "Toulouse", "paris": "Paris"}
-    return mapping.get(cleaned, (city or "Inconnue").strip().title())
+def parse_budget(v: Any) -> int:
+    if isinstance(v,(int,float)): return int(v)
+    m = re.sub(r"[^0-9]","",str(v or "")); return int(m) if m else 0
 
 
-def normalize_trade(trade: str) -> str:
-    cleaned = strip_accents((trade or "").strip().lower())
-    aliases = {"electricite": "électricité", "elec": "électricité", "renovation": "rénovation"}
-    return aliases.get(cleaned, cleaned)
+def collect_source_urls() -> tuple[list[dict], list[dict], bool]:
+    log, errs = [], []
+    online_ok = True
+    for line in (INBOX_DIR/"source_urls.txt").read_text(encoding="utf-8").splitlines() if (INBOX_DIR/"source_urls.txt").exists() else []:
+        url = line.strip()
+        if not url or url.startswith("#"): continue
+        rec = {"url":url,"collected_at":now_iso(),"source_type":"user_provided_url","compliance_note":"Validation humaine des conditions du site requise."}
+        res = fetch_public_url(url)
+        if not res["ok"]:
+            rec.update({"fetch_status":"FAILED","http_status":res.get("http_status"),"raw_excerpt":"","normalized_text_excerpt":"","detected_trade_hints":[],"detected_city_hints":[],"detected_budget_hints":[],"detected_urgency_hints":[]})
+            errs.append({"url":url,"error":res.get("error")}); online_ok=False
+        else:
+            text = extract_text_from_html(res["raw_html"])
+            sig = extract_signals(text)
+            rec.update({"fetch_status":"OK","http_status":res.get("http_status"),"raw_excerpt":safe_excerpt(res["raw_html"]),"normalized_text_excerpt":safe_excerpt(normalize_web_text(text)),"detected_trade_hints":[sig["trade_hint"]] if sig["trade_hint"] else [],"detected_city_hints":[sig["city"]] if sig["city"] else [],"detected_budget_hints":[sig["budget_eur"]] if sig["budget_eur"] else [],"detected_urgency_hints":[sig["urgency"]]})
+        log.append(rec)
+    return log, errs, online_ok
 
 
-def parse_budget(value: Any) -> int:
-    if isinstance(value, (int, float)):
-        return max(0, int(value))
-    text = re.sub(r"[^0-9]", "", str(value or ""))
-    return int(text) if text else 0
+def score(lead, artisans):
+    b={"budget_score":min(20,lead["budget_eur"]//1500),"urgency_score":15 if lead["urgency"]=="high" else 8,"clarity_score":min(10,len(lead["title"])//8),"evidence_score":20 if lead.get("evidence_url") else 8,"trade_profitability_score":10 if lead["trade_hint"] in {"rénovation","toiture","chauffage","électricité"} else 6,"location_score":5 if lead.get("city") else 0,"artisan_match_score":10 if any(lead["trade_hint"] in a.get("trades",[]) for a in artisans) else 2,"closing_probability_score":5 if lead["urgency"]=="high" else 2,"confidence_score":int(max(0,min(5,round(lead.get("confidence",0.4)*5))))}
+    total=sum(b.values()); caps=[]
+    if not lead.get("evidence_url"): caps.append("no_real_url_evidence_cap")
+    if not lead.get("city"): total=min(total,50); caps.append("missing_city_cap_50")
+    if not lead.get("trade_hint"): total=min(total,45); caps.append("missing_trade_cap_45")
+    return total,b,caps
 
+def cat(s): return "TITAN" if s>=85 else "GROS" if s>=70 else "MOYEN" if s>=55 else "PETIT" if s>=40 else "FAIBLE"
 
-def load_json(path: Path) -> list[dict[str, Any]]:
-    return json.loads(path.read_text(encoding="utf-8"))
+def run_pipeline(mode="run"):
+    for d in ["reports","export","closer","crm","matching","evidence","outputs"]: (RUNTIME_DIR/d).mkdir(parents=True,exist_ok=True)
+    artisans=load_json(DATA_DIR/"artisans"/"demo_artisans.json")
+    artisans += [{**a,"reality_status":"MANUAL"} for a in load_csv(INBOX_DIR/"artisans_manual.csv")]
+    artisans += [{**a,"reality_status":"MANUAL"} for a in load_json(INBOX_DIR/"artisans_manual.json")]
+    for a in artisans: a.setdefault("reality_status","DEMO")
 
+    leads=[]
+    for i,r in enumerate(load_json(DATA_DIR/"sources"/"demo_public_signals.json"),1):
+        leads.append({"id":r.get("id",f"demo-{i}"),"title":r.get("title",""),"description":r.get("description",""),"city":r.get("city",""),"zip_code":r.get("zip_code",""),"trade_hint":r.get("trade_hint",""),"budget_eur":parse_budget(r.get("budget_eur")),"urgency":r.get("urgency","medium"),"evidence_url":r.get("evidence_url",""),"reality_status":"DEMO","evidence_raw_excerpt":r.get("description",""),"evidence_summary":"Donnée démo","confidence":0.6,"evidence_status":"PARTIEL"})
+    for r in load_json(INBOX_DIR/"leads_manual_example.json")+load_csv(INBOX_DIR/"leads_manual_example.csv"):
+        leads.append({"id":r.get("id",f"manual-{len(leads)}"),"title":r.get("title",""),"description":r.get("description",""),"city":r.get("city",""),"zip_code":r.get("zip_code",""),"trade_hint":r.get("trade_hint",""),"budget_eur":parse_budget(r.get("budget_eur")),"urgency":r.get("urgency","medium"),"evidence_url":r.get("evidence_url",""),"reality_status":"MANUAL","evidence_raw_excerpt":r.get("description",""),"evidence_summary":"Saisie manuelle","confidence":0.55,"evidence_status":"PARTIEL"})
 
-def load_csv(path: Path) -> list[dict[str, Any]]:
-    with path.open("r", encoding="utf-8", newline="") as fh:
-        return list(csv.DictReader(fh))
+    fetch_log, fetch_err, online_ok = collect_source_urls()
+    for e in fetch_log:
+        if e["fetch_status"]!="OK": continue
+        sig=extract_signals(e["normalized_text_excerpt"])
+        rs="PARTIALLY_VERIFIED" if e["url"] and sig.get("city") and sig.get("trade_hint") else "COLLECTED_FROM_URL"
+        leads.append({"id":f"url-{len(leads)+1}","title":f"Lead collecté {sig.get('trade_hint') or 'à qualifier'}","description":e["normalized_text_excerpt"],"city":sig.get("city",""),"zip_code":sig.get("zip_code",""),"trade_hint":sig.get("trade_hint",""),"budget_eur":sig.get("budget_eur",0) or 3000,"urgency":sig.get("urgency","medium"),"evidence_url":e["url"],"reality_status":rs,"evidence_raw_excerpt":e["raw_excerpt"],"evidence_summary":"Extrait collecté depuis URL publique fournie manuellement","confidence":0.65,"evidence_status":"CONFIRMÉ"})
 
+    for l in leads:
+        l["score_total"],l["score_breakdown"],l["score_caps_applied"]=score(l,artisans)
+        l["category"]=cat(l["score_total"])
+        l["top_score_reasons"]= [k for k,v in l["score_breakdown"].items() if v>=10][:3]
+        l["risk_flags"]=[] if l.get("evidence_url") else ["preuve_insuffisante"]
+    leads.sort(key=lambda x:x["score_total"],reverse=True)
 
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    (RUNTIME_DIR/"evidence"/"source_fetch_log.json").write_text(json.dumps(fetch_log,ensure_ascii=False,indent=2),encoding="utf-8")
+    (RUNTIME_DIR/"evidence"/"source_fetch_errors.json").write_text(json.dumps(fetch_err,ensure_ascii=False,indent=2),encoding="utf-8")
+    (RUNTIME_DIR/"evidence"/"evidence_log.json").write_text(json.dumps([{k:l.get(k) for k in ["id","evidence_url","evidence_raw_excerpt","evidence_summary","reality_status"]} for l in leads],ensure_ascii=False,indent=2),encoding="utf-8")
 
+    matches=[]
+    for l in leads:
+        c=[a for a in artisans if l.get("trade_hint") in a.get("trades",[])]
+        c.sort(key=lambda x:(float(x.get("rating",0) or 0),int(x.get("reviews_count",0) or 0),float(x.get("confidence",0) or 0)),reverse=True)
+        p=c[0] if c else {"name":"Aucun artisan","phone":"","website":"","reality_status":"DEMO"}
+        l["artisan_recommended"]=p; l["artisan_alternatives"]=c[1:4]
+        matches.append({"lead_id":l["id"],"primary_artisan":p,"alternatives":c[1:4],"matching_reason":"métier+confiance","matching_confidence":"MOYEN","warning":"artisan non vérifié" if p.get("reality_status")!="MANUAL" else ""})
+    (RUNTIME_DIR/"matching"/"matches.json").write_text(json.dumps(matches,ensure_ascii=False,indent=2),encoding="utf-8")
 
-def normalize_lead(raw: dict[str, Any], index: int, source_file: str = "") -> dict[str, Any]:
-    missing = []
-    city = normalize_city(str(raw.get("city", "")))
-    trade = normalize_trade(str(raw.get("trade_hint", "")))
-    if city in {"", "Inconnue"}:
-        missing.append("city")
-    if not trade:
-        missing.append("trade_hint")
+    calls=load_csv(INBOX_DIR/"call_updates.csv")
+    changes=[]; next_actions=[]
+    for c in calls:
+        st="NOUVEAU"
+        if c.get("call_status")=="INTÉRESSÉ" and c.get("consent_status")=="ACCORD_TRANSMISSION": st="DEAL_POTENTIEL"
+        elif c.get("call_status")=="PAS_INTÉRESSÉ": st="PERDU"
+        elif c.get("call_status")=="À_RELANCER": st="À_RELANCER"
+        elif c.get("call_status")=="SIGNÉ": st="SIGNÉ"
+        changes.append({"lead_id":c.get("lead_id"),"pipeline_status":st})
+        next_actions.append({"lead_id":c.get("lead_id"),"next_action_at":c.get("next_action_at",""),"notes":c.get("notes","")})
+    (RUNTIME_DIR/"crm"/"call_log.json").write_text(json.dumps(calls,ensure_ascii=False,indent=2),encoding="utf-8")
+    (RUNTIME_DIR/"crm"/"status_changes.json").write_text(json.dumps(changes,ensure_ascii=False,indent=2),encoding="utf-8")
+    (RUNTIME_DIR/"crm"/"next_actions.json").write_text(json.dumps(next_actions,ensure_ascii=False,indent=2),encoding="utf-8")
+    (RUNTIME_DIR/"crm"/"leads_history.json").write_text(json.dumps(leads,ensure_ascii=False,indent=2),encoding="utf-8")
 
-    evidence_url = str(raw.get("evidence_url") or "")
-    evidence_status = "CONFIRMÉ" if evidence_url else "PARTIEL"
-    confidence = float(raw.get("confidence", 0.6) or 0.6)
-    if not evidence_url:
-        confidence = max(0.2, confidence - 0.15)
+    with (RUNTIME_DIR/"export"/"leads_ranked.json").open("w",encoding="utf-8") as f: json.dump({"leads":leads},f,ensure_ascii=False,indent=2)
+    with (RUNTIME_DIR/"export"/"leads_ranked.csv").open("w",encoding="utf-8",newline="") as f:
+        w=csv.DictWriter(f,fieldnames=["id","reality_status","city","trade_hint","score_total","category","evidence_url"]); w.writeheader(); [w.writerow({k:l.get(k,"") for k in w.fieldnames}) for l in leads]
 
-    budget = parse_budget(raw.get("budget_eur"))
-    budget_conf = "EXACT" if budget > 0 else "ESTIMÉ"
-    if budget == 0:
-        budget = 3000
+    callables=[l for l in leads if l["category"] in {"GROS","TITAN","MOYEN"} and l.get("city") and l.get("trade_hint")]
+    no_call=[l for l in leads if not (l.get("city") and l.get("trade_hint") and l.get("evidence_url"))]
+    md=["# Atlas Rapporteur d’Affaires — Rapport V0.7","","## Résumé exécutif",f"- Leads traités: {len(leads)}",f"- DEMO: {sum(1 for l in leads if l['reality_status']=='DEMO')}",f"- MANUAL: {sum(1 for l in leads if l['reality_status']=='MANUAL')}",f"- COLLECTED_FROM_URL/PARTIALLY_VERIFIED: {sum(1 for l in leads if l['reality_status'] in {'COLLECTED_FROM_URL','PARTIALLY_VERIFIED'})}",f"- HUMAN_CONFIRMED: {sum(1 for l in leads if l['reality_status']=='HUMAN_CONFIRMED')}",f"- Leads avec URL: {sum(1 for l in leads if l.get('evidence_url'))}",f"- Leads sans URL: {sum(1 for l in leads if not l.get('evidence_url'))}",f"- Collecte URL réelle disponible: {'OUI' if online_ok else 'NON (fallback offline)'}",""]
+    md += ["## Top 10 leads"]+[f"- {i}. {l['id']} | {l['reality_status']} | {l.get('city') or 'Inconnue'} | {l.get('trade_hint') or 'Inconnu'} | {l['score_total']} ({l['category']})" for i,l in enumerate(leads[:10],1)]
+    md += ["","## Totaux par ville"]+[f"- {k or 'Inconnue'}: {v}" for k,v in Counter([l.get('city','') for l in leads]).items()]
+    md += ["","## Totaux par métier"]+[f"- {k or 'Inconnu'}: {v}" for k,v in Counter([l.get('trade_hint','') for l in leads]).items()]
+    md += ["","## Leads à appeler aujourd’hui"]+[f"- {l['id']}" for l in callables[:10]]+["","## Leads à ne pas appeler"]+[f"- {l['id']} (preuve insuffisante/ville/métier/source)" for l in no_call[:10]]
+    (RUNTIME_DIR/"reports"/"lead_report.md").write_text("\n".join(md)+"\n",encoding="utf-8")
 
-    return {
-        "id": str(raw.get("id") or f"lead-{index:03d}"),
-        "title": str(raw.get("title") or f"Lead {index}").strip(),
-        "description": str(raw.get("description", "")).strip(),
-        "city": city,
-        "zip_code": str(raw.get("zip_code", "")).strip(),
-        "country": str(raw.get("country") or "FR").strip(),
-        "trade_hint": trade,
-        "normalized_trade": trade,
-        "budget_eur": budget,
-        "budget_confidence": budget_conf,
-        "urgency": str(raw.get("urgency") or "medium"),
-        "urgency_reason": str(raw.get("urgency_reason") or "Déduit du texte"),
-        "source": str(raw.get("source") or ("inbox_manual" if source_file else "demo")),
-        "source_type": str(raw.get("source_type") or "demo"),
-        "evidence_url": evidence_url,
-        "evidence_source_id": str(raw.get("evidence_source_id") or "manual_url"),
-        "evidence_collected_at": str(raw.get("evidence_collected_at") or now_iso()),
-        "evidence_raw_excerpt": str(raw.get("evidence_raw_excerpt") or raw.get("description", ""))[:180],
-        "evidence_summary": str(raw.get("evidence_summary") or "Preuve à valider"),
-        "evidence_confidence": round(confidence, 2),
-        "evidence_status": str(raw.get("evidence_status") or evidence_status),
-        "uncertainty_notes": str(raw.get("uncertainty_notes") or ("URL absente" if not evidence_url else "")),
-        "confidence": round(confidence, 2),
-        "pipeline_status": raw.get("pipeline_status") if raw.get("pipeline_status") in PIPELINE_STATUSES else STATUS_NEW,
-        "qualification_status": "À_VALIDER" if missing else "QUALIFIÉ",
-        "missing_fields": missing,
-        "risk_flags": ["MISSING_FIELDS"] if missing else [],
-    }
+    c=["# Daily Call Sheet V0.7","","## Ordre d’appel recommandé aujourd’hui"]
+    for i,l in enumerate(callables[:15],1): c += [f"### {i}. {l['id']}",f"- Statut réalité: {l['reality_status']}",f"- Ville: {l.get('city') or 'Inconnue'}",f"- Métier: {l.get('trade_hint') or 'Inconnu'}",f"- URL preuve: {l.get('evidence_url') or 'N/A'}",f"- Extrait preuve: {safe_excerpt(l.get('evidence_raw_excerpt',''),180)}",f"- Artisan recommandé: {l['artisan_recommended'].get('name','')}",f"- Téléphone artisan: {l['artisan_recommended'].get('phone','')}",f"- Site artisan: {l['artisan_recommended'].get('website','')}","- Consentement à demander: ACCORD_TRANSMISSION",""]
+    c += ["## À ne pas appeler"]+[f"- {l['id']}" for l in no_call[:10]]
+    (RUNTIME_DIR/"closer"/"daily_call_sheet.md").write_text("\n".join(c)+"\n",encoding="utf-8")
+    with (RUNTIME_DIR/"closer"/"daily_call_sheet.csv").open("w",encoding="utf-8",newline="") as f:
+        w=csv.DictWriter(f,fieldnames=["rank","lead_id","reality_status","city","trade","score","category","evidence_url"]); w.writeheader(); [w.writerow({"rank":i,"lead_id":l["id"],"reality_status":l["reality_status"],"city":l.get("city",""),"trade":l.get("trade_hint",""),"score":l["score_total"],"category":l["category"],"evidence_url":l.get("evidence_url","")}) for i,l in enumerate(callables[:15],1)]
+    (RUNTIME_DIR/"closer"/"priority_leads.md").write_text("\n".join([f"- {l['id']} {l['score_total']}" for l in leads if l['category'] in {"TITAN","GROS"}]),encoding="utf-8")
+    return {"status":"ok","total":len(leads),"counts":Counter([l["reality_status"] for l in leads]),"categories":Counter([l["category"] for l in leads])}
 
-
-def score_lead(lead: dict[str, Any], artisans: list[dict[str, Any]]) -> tuple[int, dict[str, int]]:
-    budget_score = min(25, int(lead["budget_eur"] / 1200))
-    urgency_score = {"low": 5, "medium": 10, "high": 15}.get(lead["urgency"], 8)
-    clarity_score = min(10, int((len(lead["title"]) + len(lead["description"])) / 28))
-    evidence_score = {"ESTIMÉ": 4, "PARTIEL": 9, "CONFIRMÉ": 15, "À_VALIDER": 6}.get(lead["evidence_status"], 6)
-    trade_profitability_score = 10 if lead["normalized_trade"] in {"rénovation", "toiture", "chauffage", "électricité"} else 6
-    location_score = 5 if lead["city"] != "Inconnue" else 1
-    artisan_match_score = 10 if any(lead["normalized_trade"] in a.get("trades", []) for a in artisans) else 2
-    closing_probability_score = 5 if lead["urgency"] == "high" else 3
-    confidence_score = int(max(0, min(5, round(lead["confidence"] * 5))))
-    breakdown = {
-        "budget_score": budget_score,
-        "urgency_score": urgency_score,
-        "clarity_score": clarity_score,
-        "evidence_score": evidence_score,
-        "trade_profitability_score": trade_profitability_score,
-        "location_score": location_score,
-        "artisan_match_score": artisan_match_score,
-        "closing_probability_score": closing_probability_score,
-        "confidence_score": confidence_score,
-    }
-    return sum(breakdown.values()), breakdown
-
-
-def category_from_score(score: float) -> str:
-    if score >= 85:
-        return "TITAN"
-    if score >= 70:
-        return "GROS"
-    if score >= 55:
-        return "MOYEN"
-    if score >= 40:
-        return "PETIT"
-    return "FAIBLE"
-
-
-def ingest_sources() -> list[dict[str, Any]]:
-    rows = load_json(DATA_DIR / "sources" / "demo_public_signals.json")
-    for p in sorted(INBOX_DIR.glob("*.json")):
-        rows.extend(load_json(p))
-    for p in sorted(INBOX_DIR.glob("*.csv")):
-        rows.extend(load_csv(p))
-    return [normalize_lead(r, i + 1) for i, r in enumerate(rows)]
-
-
-def match_artisans(leads: list[dict[str, Any]], artisans: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    for lead in leads:
-        compatibles = [a for a in artisans if lead["normalized_trade"] in a.get("trades", []) and a.get("city") == lead["city"]]
-        compatibles.sort(key=lambda x: (x.get("rating", 0), x.get("reviews_count", 0), x.get("confidence", 0)), reverse=True)
-        lead["artisan_recommended"] = compatibles[0] if compatibles else {"name": "Aucun artisan fiable trouvé, validation humaine nécessaire"}
-        lead["artisan_alternatives"] = compatibles[1:4]
-        lead["matching_reason"] = "Métier + zone + réputation" if compatibles else "Validation humaine requise"
-    return leads
-
-
-def run_pipeline(mode: str = "run") -> dict[str, Any]:
-    for d in [RUNTIME_DIR / "reports", RUNTIME_DIR / "export", RUNTIME_DIR / "closer", RUNTIME_DIR / "crm", RUNTIME_DIR / "matching", RUNTIME_DIR / "evidence", RUNTIME_DIR / "outputs", INBOX_DIR]:
-        d.mkdir(parents=True, exist_ok=True)
-    artisans = load_json(DATA_DIR / "artisans" / "demo_artisans.json")
-    leads = ingest_sources()
-    for lead in leads:
-        lead["score"], lead["score_breakdown"] = score_lead(lead, artisans)
-        lead["category"] = category_from_score(lead["score"])
-        lead["qualification_status"] = "PRIORITAIRE" if lead["category"] in {"TITAN", "GROS"} else lead["qualification_status"]
-    leads = sorted(match_artisans(leads, artisans), key=lambda x: x["score"], reverse=True)
-
-    evidence_log = [{k: l[k] for k in ["id", "evidence_url", "evidence_source_id", "evidence_collected_at", "evidence_raw_excerpt", "evidence_status", "uncertainty_notes"]} for l in leads]
-    (RUNTIME_DIR / "evidence" / "evidence_log.json").write_text(json.dumps(evidence_log, ensure_ascii=False, indent=2), encoding="utf-8")
-    (RUNTIME_DIR / "matching" / "matches.json").write_text(json.dumps(leads, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    call_updates = load_csv(INBOX_DIR / "call_updates.csv") if (INBOX_DIR / "call_updates.csv").exists() else []
-    for c in call_updates:
-        if c.get("call_status") in CALL_STATUSES:
-            for l in leads:
-                if l["id"] == c.get("lead_id"):
-                    l["pipeline_status"] = "APPELÉ" if c["call_status"] in {"CONTACTÉ", "APPELÉ_SANS_RÉPONSE"} else l["pipeline_status"]
-                    l["last_action_at"] = c.get("called_at", now_iso())
-                    l["next_action_at"] = c.get("next_action_at", "")
-    (RUNTIME_DIR / "crm" / "call_log.json").write_text(json.dumps(call_updates, ensure_ascii=False, indent=2), encoding="utf-8")
-    (RUNTIME_DIR / "crm" / "leads_history.json").write_text(json.dumps(leads, ensure_ascii=False, indent=2), encoding="utf-8")
-    (RUNTIME_DIR / "crm" / "status_changes.json").write_text(json.dumps([{"lead_id": l["id"], "pipeline_status": l["pipeline_status"]} for l in leads], ensure_ascii=False, indent=2), encoding="utf-8")
-
-    report = RUNTIME_DIR / "reports" / "lead_report.md"
-    lines = ["# Atlas Rapporteur d’Affaires — Rapport V0.6", "", "## Résumé exécutif", f"- Leads traités: {len(leads)}", f"- Leads TITAN: {sum(1 for l in leads if l['category']=='TITAN')}"]
-    lines += ["", "## Top 10 leads"]
-    for i, l in enumerate(leads[:10], 1):
-        lines.append(f"- {i}. {l['id']} | {l['city']} | {l['normalized_trade']} | {l['score']} ({l['category']})")
-        lines.append(f"  - Preuve: {l['evidence_url'] or 'N/A'} | Collecte: {l['evidence_collected_at']} | Confiance: {l['evidence_confidence']}")
-    lines += ["", "## Suivi appels", f"- Leads appelés: {sum(1 for l in leads if l.get('pipeline_status')=='APPELÉ')}"]
-    report.write_text("\n".join(lines)+"\n", encoding="utf-8")
-
-    export_json = RUNTIME_DIR / "export" / "leads_ranked.json"
-    export_json.write_text(json.dumps({"leads": leads}, ensure_ascii=False, indent=2), encoding="utf-8")
-    with (RUNTIME_DIR / "export" / "leads_ranked.csv").open("w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=["id", "city", "normalized_trade", "score", "category", "pipeline_status", "evidence_url"])
-        w.writeheader(); [w.writerow({k: l.get(k, "") for k in w.fieldnames}) for l in leads]
-
-    closer_md = RUNTIME_DIR / "closer" / "daily_call_sheet.md"
-    closer_lines = ["# Daily Call Sheet", "", "| ordre | lead_id | ville | métier | titre | budget | score | catégorie | preuve | artisan | prochaine action |", "|---:|---|---|---|---|---:|---:|---|---|---|---|"]
-    for i, l in enumerate(leads[:15], 1):
-        closer_lines.append(f"| {i} | {l['id']} | {l['city']} | {l['normalized_trade']} | {l['title']} | {l['budget_eur']} | {l['score']} | {l['category']} | {(l['evidence_summary'] or '')[:40]} | {l['artisan_recommended'].get('name','')} | {l.get('next_action_at','À planifier')} |")
-    closer_lines += ["", "Script d'appel: présenter Atlas, ne rien promettre, vérifier le besoin réel, demander accord avant transmission, noter consentement/refus."]
-    closer_md.write_text("\n".join(closer_lines)+"\n", encoding="utf-8")
-    (RUNTIME_DIR / "closer" / "priority_leads.md").write_text("\n".join([f"- {l['id']} {l['score']}" for l in leads if l['category'] in {'TITAN','GROS'}]), encoding="utf-8")
-    with (RUNTIME_DIR / "closer" / "daily_call_sheet.csv").open("w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=["order","lead_id","city","trade","title","budget","score","category"]); w.writeheader()
-        for i,l in enumerate(leads[:15],1): w.writerow({"order":i,"lead_id":l["id"],"city":l["city"],"trade":l["normalized_trade"],"title":l["title"],"budget":l["budget_eur"],"score":l["score"],"category":l["category"]})
-
-    summary = {"status":"ok","report":str(report),"export":str(export_json),"export_csv":str(RUNTIME_DIR / "export" / "leads_ranked.csv"),"execution_summary":str(RUNTIME_DIR / "outputs" / "run_summary.json"),"total":len(leads)}
-    (RUNTIME_DIR / "outputs" / "run_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    return summary
-
-
-if __name__ == "__main__":
+if __name__=="__main__":
     import sys
-    mode = sys.argv[1] if len(sys.argv) > 1 else "run"
-    s = run_pipeline(mode)
-    if mode == "crm-summary":
-        print("CRM summary:", s["total"])
-    print("ATLAS RAPPORTEUR D’AFFAIRES — V0.6")
-    print("Status: OK")
+    m=sys.argv[1] if len(sys.argv)>1 else "run"
+    s=run_pipeline(m)
+    if m=="crm-summary":
+        print("Mode CRM: atlas/runtime/crm/leads_history.json")
+    else:
+        print("ATLAS RAPPORTEUR D’AFFAIRES — V0.7")
+        print("Status: OK")
+        print(f"Leads traités: {s['total']}")
+        print(f"Leads réels URL: {s['counts'].get('COLLECTED_FROM_URL',0)+s['counts'].get('PARTIALLY_VERIFIED',0)}")
+        print(f"Leads manuels: {s['counts'].get('MANUAL',0)}")
+        print(f"Leads démo: {s['counts'].get('DEMO',0)}")
+        for k in ["TITAN","GROS","MOYEN","PETIT","FAIBLE"]: print(f"{k}: {s['categories'].get(k,0)}")
+        print("Rapport:\natlas/runtime/reports/lead_report.md")
+        print("Fiche closer:\natlas/runtime/closer/daily_call_sheet.md")
+        print("Exports:\natlas/runtime/export/leads_ranked.json\natlas/runtime/export/leads_ranked.csv")

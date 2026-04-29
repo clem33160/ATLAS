@@ -1,36 +1,43 @@
-# Atlas Rapporteur d’Affaires (V0.6)
+# Atlas Rapporteur d’Affaires (V0.7)
 
-Atlas V0.6 est une base locale et légale de rapporteur d’affaires.
+V0.7 transforme Atlas en moteur de collecte **semi-automatique légale** à partir d’URLs publiques fournies manuellement.
 
-## Cadre légal
-- Pas de spam, pas de contact automatique, pas de bypass captcha/login/ToS.
-- Humain dans la boucle: Atlas prépare, l’humain valide et appelle.
-- Les vraies sources externes sont **désactivées par défaut** (`atlas/config/sources.yaml`).
+## Statuts réalité
+- `DEMO`
+- `MANUAL`
+- `COLLECTED_FROM_URL`
+- `PARTIALLY_VERIFIED`
+- `HUMAN_CONFIRMED`
+- `ARCHIVED`
 
-## V0.6
-- Registre de sources publiques légales.
-- Collecte semi-automatique contrôlée via `atlas/inbox/source_urls.txt`.
-- Preuves (URL/date/extrait/confiance) et journal evidence.
-- Qualification lead enrichie + scoring économique /100.
-- Matching artisans renforcé + fallback humain.
-- Mini CRM local + suivi des appels CSV.
-- Exports closer (`atlas/runtime/closer/`).
-- Rapport Markdown V0.6 lisible.
+## Entrées utilisateur
+- URLs: `atlas/inbox/source_urls.txt` (1 URL publique par ligne)
+- Leads manuels: `atlas/inbox/leads_manual_example.json|csv`
+- Artisans manuels: `atlas/inbox/artisans_manual.csv|json` (ou exemples)
+- Retours d’appel: `atlas/inbox/call_updates.csv`
 
-## Termux
+## Règles légales et interdictions
+Aucun spam, aucun contact automatique, aucun bypass captcha/login/ToS, aucun scraping agressif.
+Toujours: **Validation humaine des conditions du site requise.**
+
+## Exports
+- Rapport: `atlas/runtime/reports/lead_report.md`
+- Closer: `atlas/runtime/closer/daily_call_sheet.md`
+- Ranking: `atlas/runtime/export/leads_ranked.json|csv`
+- Evidence: `atlas/runtime/evidence/source_fetch_log.json`
+
+## Workflow Codex Web + GitHub + Termux
 ```bash
-pkg update -y && pkg upgrade -y
-pkg install -y git python
-
-git clone <URL_DU_DEPOT> ATLAS
-cd ATLAS
+cd "$HOME/atlas_workspace/ATLAS"
+git pull --rebase --autostash
 chmod +x ./atlas/scripts/run.sh ./atlas/scripts/test.sh
 ./atlas/scripts/test.sh
 ./atlas/scripts/run.sh
+sed -n '1,360p' atlas/runtime/reports/lead_report.md
+sed -n '1,260p' atlas/runtime/closer/daily_call_sheet.md
 ```
 
-## Workflow Codex Web + GitHub + Termux
-1. Modifier via Codex Web.
-2. Commit/PR GitHub.
-3. Pull sur Termux.
-4. `./atlas/scripts/test.sh` puis `./atlas/scripts/run.sh`.
+## Modes
+- Run: `./atlas/scripts/run.sh`
+- CRM summary: `./atlas/scripts/run.sh crm-summary`
+- Verbose: `./atlas/scripts/run.sh verbose`
