@@ -1,50 +1,5 @@
 [
-  {
-    "artisan_id": "art-001",
-    "name": "Plombier Express Lyon",
-    "trade": "plomberie",
-    "cities": ["Lyon"],
-    "capacity": 2,
-    "quality_score": 4.7
-  },
-  {
-    "artisan_id": "art-002",
-    "name": "ThermoSud Chauffage",
-    "trade": "chauffage",
-    "cities": ["Marseille"],
-    "capacity": 3,
-    "quality_score": 4.5
-  },
-  {
-    "artisan_id": "art-003",
-    "name": "Serrure Minute Toulouse",
-    "trade": "serrurerie",
-    "cities": ["Toulouse"],
-    "capacity": 2,
-    "quality_score": 4.6
-  },
-  {
-    "artisan_id": "art-004",
-    "name": "Couverture Rhône-Alpes",
-    "trade": "toiture",
-    "cities": ["Lyon"],
-    "capacity": 1,
-    "quality_score": 4.4
-  },
-  {
-    "artisan_id": "art-005",
-    "name": "Renova Méditerranée",
-    "trade": "rénovation",
-    "cities": ["Marseille"],
-    "capacity": 2,
-    "quality_score": 4.8
-  },
-  {
-    "artisan_id": "art-006",
-    "name": "Volt Pro Occitanie",
-    "trade": "électricité",
-    "cities": ["Toulouse"],
-    "capacity": 3,
-    "quality_score": 4.4
-  }
+  {"artisan_id":"art-001","name":"Plombier Express Lyon","city":"Lyon","zip_code":"69003","country":"FR","trades":["plomberie"],"max_distance_km_estimated":25,"rating":4.7,"reviews_count":120,"phone":"+33000000001","website":"https://example.local/art-001","source_url":"https://example.local/art-001","confidence":0.85,"availability_status":"À_VALIDER","notes":"Démo"},
+  {"artisan_id":"art-002","name":"ThermoSud Chauffage","city":"Marseille","zip_code":"13008","country":"FR","trades":["chauffage"],"max_distance_km_estimated":30,"rating":4.5,"reviews_count":95,"phone":"+33000000002","website":"https://example.local/art-002","source_url":"https://example.local/art-002","confidence":0.82,"availability_status":"INCONNU","notes":"Démo"},
+  {"artisan_id":"art-003","name":"Renova Méditerranée","city":"Marseille","zip_code":"13006","country":"FR","trades":["rénovation"],"max_distance_km_estimated":35,"rating":4.8,"reviews_count":140,"phone":"+33000000003","website":"https://example.local/art-003","source_url":"https://example.local/art-003","confidence":0.9,"availability_status":"DISPONIBLE","notes":"Démo"}
 ]

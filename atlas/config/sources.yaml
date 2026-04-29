@@ -1,0 +1,25 @@
+sources:
+  - id: demo_public_signals
+    nom: Signaux publics de démonstration
+    type: demo
+    base_url: https://example.local/demo
+    pays: FR
+    langue: fr
+    domaines: [artisanat, habitat]
+    mode_collecte: manual
+    respect_tos_required: true
+    robots_policy_note: Pas de robots réels en mode démo.
+    enabled: true
+    notes_legales: Données de démonstration locales.
+  - id: manual_url
+    nom: URLs fournies manuellement
+    type: user_provided
+    base_url: https://manual.local
+    pays: FR
+    langue: fr
+    domaines: [artisanat]
+    mode_collecte: semi_auto
+    respect_tos_required: true
+    robots_policy_note: Vérification humaine obligatoire.
+    enabled: false
+    notes_legales: Collecte semi-auto limitée aux URLs fournies par l'utilisateur.

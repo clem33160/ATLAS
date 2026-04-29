@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python3 -m atlas.main
+MODE="${1:-run}"
+python3 -m atlas.main "$MODE"
 
-printf "\nRapport: atlas/runtime/reports/lead_report.md\n"
-echo "Export: atlas/runtime/export/leads_ranked.json"
-echo "Export CSV: atlas/runtime/export/leads_ranked.csv"
-echo "Résumé: atlas/runtime/outputs/run_summary.json"
+if [[ "$MODE" == "crm-summary" ]]; then
+  echo "CRM: atlas/runtime/crm/leads_history.json"
+  exit 0
+fi
+
+echo "ATLAS RAPPORTEUR D’AFFAIRES — V0.6"
+echo "Status: OK"
+echo "Rapport: atlas/runtime/reports/lead_report.md"
+echo "Export closer: atlas/runtime/closer/daily_call_sheet.md"
+echo "JSON: atlas/runtime/export/leads_ranked.json"
+echo "CSV: atlas/runtime/export/leads_ranked.csv"

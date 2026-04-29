@@ -1,56 +1,36 @@
-# ATLAS — Rapporteur d’Affaires (V0.5)
+# Atlas Rapporteur d’Affaires (V0.6)
 
-V0.5 transforme la démo locale en base exploitable pour un rapporteur d’affaires local, **sans scraping internet réel**.
+Atlas V0.6 est une base locale et légale de rapporteur d’affaires.
 
-## Principes légaux
-- Aucun scraping agressif.
-- Aucune connexion automatique à des services externes.
-- Aucune prise de contact automatique.
-- Atlas prépare des opportunités, un humain valide puis appelle.
+## Cadre légal
+- Pas de spam, pas de contact automatique, pas de bypass captcha/login/ToS.
+- Humain dans la boucle: Atlas prépare, l’humain valide et appelle.
+- Les vraies sources externes sont **désactivées par défaut** (`atlas/config/sources.yaml`).
 
-## Nouveautés V0.5
-- Inbox locale `atlas/inbox/` pour ajout manuel de leads.
-- Import de leads en JSON et CSV.
-- Normalisation des champs (ville, métier, budget, urgence, confiance, etc.).
-- Déduplication simple (ville + métier + titre similaire + budget proche).
-- Scoring /100 détaillé et catégories `PETIT`, `MOYEN`, `GROS`, `TITAN`.
-- Statut pipeline (`NOUVEAU`, `À_APPELER`, `APPELÉ`, `INTÉRESSÉ`, `À_RELANCER`, `DEAL_POTENTIEL`, `SIGNÉ`, `PERDU`).
-- Rapport Markdown enrichi + exports JSON/CSV + résumé d’exécution JSON.
+## V0.6
+- Registre de sources publiques légales.
+- Collecte semi-automatique contrôlée via `atlas/inbox/source_urls.txt`.
+- Preuves (URL/date/extrait/confiance) et journal evidence.
+- Qualification lead enrichie + scoring économique /100.
+- Matching artisans renforcé + fallback humain.
+- Mini CRM local + suivi des appels CSV.
+- Exports closer (`atlas/runtime/closer/`).
+- Rapport Markdown V0.6 lisible.
 
-## Workflow Codex Web + GitHub + Termux
-1. Modifier via Codex Web (PR GitHub).
-2. Merger la PR sur GitHub.
-3. Sur Termux: pull, test, run.
-
-## Commandes exactes
-Depuis la racine du dépôt:
-
-```bash
-./atlas/scripts/test.sh
-./atlas/scripts/run.sh
-```
-
-## Ajouter des leads manuels (`atlas/inbox/`)
-- JSON: `atlas/inbox/leads_manual_example.json`
-- CSV: `atlas/inbox/leads_manual_example.csv`
-
-Vous pouvez dupliquer ces fichiers et ajouter vos leads. Ils seront intégrés automatiquement au prochain run.
-
-## Sorties générées
-- Rapport: `atlas/runtime/reports/lead_report.md`
-- Export JSON complet: `atlas/runtime/export/leads_ranked.json`
-- Export CSV complet: `atlas/runtime/export/leads_ranked.csv`
-- Résumé d’exécution JSON: `atlas/runtime/outputs/run_summary.json`
-
-## Termux (Android)
+## Termux
 ```bash
 pkg update -y && pkg upgrade -y
 pkg install -y git python
 
 git clone <URL_DU_DEPOT> ATLAS
 cd ATLAS
-
-git pull --rebase --autostash
+chmod +x ./atlas/scripts/run.sh ./atlas/scripts/test.sh
 ./atlas/scripts/test.sh
 ./atlas/scripts/run.sh
 ```
+
+## Workflow Codex Web + GitHub + Termux
+1. Modifier via Codex Web.
+2. Commit/PR GitHub.
+3. Pull sur Termux.
+4. `./atlas/scripts/test.sh` puis `./atlas/scripts/run.sh`.
