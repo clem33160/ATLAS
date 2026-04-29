@@ -1,0 +1,324 @@
+sources:
+  - source_id: demo_user_manual
+    name: Démonstration utilisateur
+    category: user_manual
+    country: FR
+    language: fr
+    base_url: https://example.org/demo
+    source_kind: mixed
+    collection_mode: manual_url_only
+    enabled_default: true
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: demo
+    default_reality_status: DEMO
+    output_allowed: true
+
+  - source_id: boamp
+    name: BOAMP
+    category: marches_publics
+    country: FR
+    language: fr
+    base_url: https://www.boamp.fr
+    source_kind: lead_source
+    collection_mode: manual_url_only
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, captcha_bypass, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: official
+    default_reality_status: PARTIALLY_VERIFIED
+    output_allowed: true
+
+  - source_id: marches_publics_gouv_place
+    name: PLACE - Marchés publics de l’État
+    category: marches_publics
+    country: FR
+    language: fr
+    base_url: https://www.marches-publics.gouv.fr
+    source_kind: lead_source
+    collection_mode: manual_url_only
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, captcha_bypass, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: official
+    default_reality_status: PARTIALLY_VERIFIED
+    output_allowed: true
+
+  - source_id: data_gouv_marches_publics
+    name: Données essentielles des marchés publics - data.gouv.fr
+    category: open_data
+    country: FR
+    language: fr
+    base_url: https://www.data.gouv.fr
+    source_kind: lead_source
+    collection_mode: manual_url_only
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: official
+    default_reality_status: COLLECTED_FROM_URL
+    output_allowed: true
+
+  - source_id: annuaire_entreprises
+    name: Annuaire des Entreprises
+    category: official_business_directory
+    country: FR
+    language: fr
+    base_url: https://annuaire-entreprises.data.gouv.fr
+    source_kind: artisan_source
+    collection_mode: manual_url_only
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: official
+    default_reality_status: OFFICIAL_DIRECTORY
+    output_allowed: true
+
+  - source_id: sirene_insee
+    name: Sirene / INSEE
+    category: official_business_directory
+    country: FR
+    language: fr
+    base_url: https://www.insee.fr/fr/information/3591226
+    source_kind: artisan_source
+    collection_mode: official_api
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [official_api_query, evidence_capture]
+    forbidden_actions: [mass_scraping, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: official
+    default_reality_status: SIRENE
+    output_allowed: true
+
+  - source_id: france_renov_rge
+    name: France Rénov’ - Annuaire RGE
+    category: rge_directory
+    country: FR
+    language: fr
+    base_url: https://france-renov.gouv.fr/annuaires-professionnels/artisan-rge-architecte
+    source_kind: artisan_source
+    collection_mode: manual_url_only
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: official
+    default_reality_status: RGE
+    output_allowed: true
+
+  - source_id: artisanat_cma
+    name: CMA / Artisanat.fr
+    category: artisan_directory
+    country: FR
+    language: fr
+    base_url: https://www.artisanat.fr
+    source_kind: artisan_source
+    collection_mode: manual_url_only
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review, evidence_capture]
+    forbidden_actions: [mass_scraping, auto_contact, spam]
+    legal_notes: Validation humaine des CGU requise.
+    reliability_level: public
+    default_reality_status: OFFICIAL_DIRECTORY
+    output_allowed: true
+
+  - source_id: pagesjaunes
+    name: PagesJaunes
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://www.pagesjaunes.fr
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: travaux_com
+    name: travaux_com
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/travaux_com
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: habitatpresto
+    name: habitatpresto
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/habitatpresto
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: hello_artisan
+    name: hello_artisan
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/hello_artisan
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: allovoisins
+    name: allovoisins
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/allovoisins
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: leboncoin
+    name: leboncoin
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/leboncoin
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: particuliers_a_particuliers
+    name: particuliers_a_particuliers
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/particuliers_a_particuliers
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: marketplace_public_posts
+    name: marketplace_public_posts
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/marketplace_public_posts
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: forums_publics_locaux
+    name: forums_publics_locaux
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/forums_publics_locaux
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
+
+  - source_id: facebook_groups_public_pages
+    name: facebook_groups_public_pages
+    category: private_candidate_platform
+    country: FR
+    language: fr
+    base_url: https://example.org/facebook_groups_public_pages
+    source_kind: mixed
+    collection_mode: disabled
+    enabled_default: false
+    requires_human_tos_validation: true
+    human_validated_tos: false
+    allowed_actions: [manual_review]
+    forbidden_actions: [mass_scraping, account_login, captcha_bypass, auto_contact, spam, personal_data_harvesting]
+    legal_notes: Source privée candidate, désactivée par défaut.
+    reliability_level: private_candidate
+    default_reality_status: ARCHIVED
+    output_allowed: false
