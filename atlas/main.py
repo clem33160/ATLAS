@@ -16,6 +16,12 @@ def load_csv(p):
     if not p.exists(): return []
     with p.open('r',encoding='utf-8',newline='') as f: return list(csv.DictReader(f))
 
+
+
+def is_demo_url(url:str)->bool:
+    u=(url or '').lower()
+    return any(x in u for x in ['example.org','example.local','example.com/demo'])
+
 def parse_source_urls():
     items=[]
     p=INBOX/'source_urls.txt'
@@ -36,19 +42,21 @@ def run_pipeline(mode='run'):
     for i,r in enumerate(load_json(DATA/'sources'/'demo_public_signals.json'),1):
         leads.append({'id':r.get('id',f'demo-{i}'),'title':r.get('title',''),'city':r.get('city',''),'trade_hint':r.get('trade_hint',''),'evidence_url':r.get('evidence_url',''),'reality_status':'DEMO','evidence_raw_excerpt':r.get('description',''),'confidence':0.3})
     for r in load_json(INBOX/'leads_manual_example.json')+load_csv(INBOX/'leads_manual_example.csv'):
-        leads.append({'id':r.get('id',f'manual-{len(leads)}'),'title':r.get('title',''),'city':r.get('city',''),'trade_hint':r.get('trade_hint',''),'evidence_url':r.get('evidence_url',''),'reality_status':'MANUAL','evidence_raw_excerpt':r.get('description',''),'confidence':0.6 if r.get('evidence_url') else 0.45})
+        ev=r.get('evidence_url','')
+        st='DEMO' if is_demo_url(ev) else 'MANUAL'
+        leads.append({'id':r.get('id',f'manual-{len(leads)}'),'title':r.get('title',''),'city':r.get('city',''),'trade_hint':r.get('trade_hint',''),'evidence_url':ev,'reality_status':st,'evidence_raw_excerpt':r.get('description',''),'confidence':0.6 if ev and st!='DEMO' else 0.3})
     fetch=[]
     for s in parse_source_urls():
         res=fetch_public_url(s['url'])
         if not res['ok']: continue
         text=normalize_web_text(extract_text_from_html(res['raw_html']))
         sig=extract_signals(text)
-        status='PARTIALLY_VERIFIED' if sig.get('city') and sig.get('trade_hint') else 'COLLECTED_FROM_URL'
+        status='DEMO' if is_demo_url(s['url']) else ('PARTIALLY_VERIFIED' if sig.get('city') and sig.get('trade_hint') else 'COLLECTED_FROM_URL')
         leads.append({'id':f"url-{len(leads)+1}",'title':f"Lead collecté {sig.get('trade_hint') or 'à qualifier'}",'city':sig.get('city',''),'trade_hint':sig.get('trade_hint',''),'evidence_url':s['url'],'reality_status':status,'evidence_raw_excerpt':safe_excerpt(text,180),'confidence':0.75 if status=='PARTIALLY_VERIFIED' else 0.65,'collected_at':now()})
         fetch.append({'source_id':s['source_id'],'url':s['url'],'note':s['note'],'collected_at':now()})
     for l in leads:
         l['score_total']=80 if l['reality_status'] in {'HUMAN_CONFIRMED','PARTIALLY_VERIFIED'} else 70 if l['reality_status'] in {'COLLECTED_FROM_URL','MANUAL'} else 40
-    real=[l for l in leads if l['reality_status'] in {'MANUAL','COLLECTED_FROM_URL','PARTIALLY_VERIFIED','HUMAN_CONFIRMED'} and l.get('evidence_url')]
+    real=[l for l in leads if l['reality_status'] in {'MANUAL','COLLECTED_FROM_URL','PARTIALLY_VERIFIED','HUMAN_CONFIRMED'} and l.get('evidence_url') and not is_demo_url(l.get('evidence_url',''))]
     demo=[l for l in leads if l['reality_status']=='DEMO']
     with (RUN/'export'/'leads_ranked.json').open('w',encoding='utf-8') as f: json.dump({'leads':leads},f,ensure_ascii=False,indent=2)
     def write_csv(path,rows,fields):
@@ -68,7 +76,7 @@ def run_pipeline(mode='run'):
     call=['# Daily Call Sheet V0.8','', '## 1. À appeler aujourd’hui - leads réels seulement']
     call += [f"- {l['id']}" for l in real] if real else ['Aucun lead réel exploitable aujourd’hui. Ajoutez des URLs publiques dans atlas/inbox/source_urls.txt ou des leads manuels vérifiés.']
     call += ['', '## 2. À valider avant appel'] + [f"- {l['id']}" for l in leads if l['reality_status']=='MANUAL' and not l.get('evidence_url')]
-    call += ['', '## 3. Démo uniquement - ne pas appeler'] + [f"- {l['id']}" for l in demo]
+    call += ['', '## 3. Démo uniquement - ne pas appeler'] + [f"- {l['id']}" for l in leads if l['reality_status']=='DEMO']
     call += ['', '## 4. Artisans recommandés réels'] + [f"- {a.get('name','')} (source officielle / annuaire)" for a in artisans if a.get('source_kind') in {'OFFICIAL_DIRECTORY','RGE','SIRENE'}]
     call += ['', '## 5. Artisans à vérifier'] + [f"- {w['name']} ({w['warning']})" for w in warns]
     call += ['', '## 6. Notes de conformité','- Validation humaine des CGU requise.','- Aucun contact automatique.','- Aucun scraping agressif.']

@@ -6,7 +6,7 @@ from .official_sources import load_official_urls
 def resolve_artisans(base: Path):
     data=[]; warnings=[]
     for a in load_json(base/'data'/'artisans'/'demo_artisans.json'):
-        a['source_kind']='DEMO'; a['phone']=a.get('phone',''); a['website']=a.get('website',''); data.append(a)
+        a['source_kind']='DEMO'; a['phone']='NON_PUBLIC'; a['website']='INCONNU'; a['rating']='INCONNU'; a['reviews_count']='INCONNU'; data.append(a)
     for a in load_csv(base/'inbox'/'artisans_manual.csv')+load_json(base/'inbox'/'artisans_manual.json'):
         a['source_kind']='MANUAL'; a['phone']=a.get('phone',''); a['website']=a.get('website','')
         if not a.get('source_url'): warnings.append({'name':a.get('name',''),'warning':'artisan manuel non vérifié'})
