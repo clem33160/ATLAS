@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Atlas Rapporteur d’Affaires - V0.5."""
-
+"""Atlas Rapporteur d’Affaires - V0.6."""
 from __future__ import annotations
 
 import csv
 import json
 import re
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,44 +16,11 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 INBOX_DIR = BASE_DIR / "inbox"
 RUNTIME_DIR = BASE_DIR / "runtime"
-OUTPUTS_DIR = RUNTIME_DIR / "outputs"
-REPORTS_DIR = RUNTIME_DIR / "reports"
-EXPORT_DIR = RUNTIME_DIR / "export"
+EXAMPLES_DIR = BASE_DIR / "examples"
 
-URGENCY_NORMALIZATION = {
-    "low": "low", "basse": "low", "faible": "low",
-    "medium": "medium", "moyenne": "medium", "normal": "medium",
-    "high": "high", "haute": "high", "urgent": "high", "élevée": "high",
-}
 STATUS_NEW = "NOUVEAU"
-PIPELINE_STATUSES = {"NOUVEAU", "À_APPELER", "APPELÉ", "INTÉRESSÉ", "À_RELANCER", "DEAL_POTENTIEL", "SIGNÉ", "PERDU"}
-RENTABLE_TRADES = {"rénovation", "toiture", "chauffage"}
-TRADES_ALIASES = {"electricite": "électricité", "elec": "électricité", "renovation": "rénovation"}
-
-CATEGORY_THRESHOLDS = [("TITAN", 85), ("GROS", 65), ("MOYEN", 40), ("PETIT", 0)]
-SOURCE_SCORE = {
-    "annonce_demo": 9,
-    "plateforme_locale_demo": 8,
-    "annuaire_demo": 7,
-    "groupe_voisinage_demo": 6,
-    "forum_local_demo": 5,
-    "inbox_manual": 7,
-}
-
-
-@dataclass
-class Lead:
-    id: str
-    title: str
-    description: str
-    city: str
-    zip_code: str
-    trade_hint: str
-    budget_eur: int
-    urgency: str
-    source: str
-    confidence: float = 0.6
-    pipeline_status: str = STATUS_NEW
+PIPELINE_STATUSES = {"NOUVEAU", "À_APPELER", "APPELÉ", "INTÉRESSÉ", "À_RELANCER", "DEAL_POTENTIEL", "SIGNÉ", "PERDU", "ARCHIVE"}
+CALL_STATUSES = {"NON_APPELÉ", "APPELÉ_SANS_RÉPONSE", "CONTACTÉ", "INTÉRESSÉ", "PAS_INTÉRESSÉ", "À_RELANCER", "SIGNÉ", "PERDU"}
 
 
 def strip_accents(value: str) -> str:
@@ -62,14 +29,14 @@ def strip_accents(value: str) -> str:
 
 def normalize_city(city: str) -> str:
     cleaned = strip_accents((city or "").strip().lower())
-    mapping = {"lyon": "Lyon", "marseille": "Marseille", "toulouse": "Toulouse"}
+    mapping = {"lyon": "Lyon", "marseille": "Marseille", "toulouse": "Toulouse", "paris": "Paris"}
     return mapping.get(cleaned, (city or "Inconnue").strip().title())
 
 
 def normalize_trade(trade: str) -> str:
     cleaned = strip_accents((trade or "").strip().lower())
-    cleaned = TRADES_ALIASES.get(cleaned, cleaned)
-    return "électricité" if cleaned == "electricite" else cleaned
+    aliases = {"electricite": "électricité", "elec": "électricité", "renovation": "rénovation"}
+    return aliases.get(cleaned, cleaned)
 
 
 def parse_budget(value: Any) -> int:
@@ -79,21 +46,8 @@ def parse_budget(value: Any) -> int:
     return int(text) if text else 0
 
 
-def normalize_urgency(value: str) -> str:
-    return URGENCY_NORMALIZATION.get(strip_accents((value or "").strip().lower()), "medium")
-
-
-def normalize_confidence(value: Any) -> float:
-    try:
-        score = float(value)
-    except (TypeError, ValueError):
-        score = 0.5
-    return max(0.0, min(score, 1.0))
-
-
 def load_json(path: Path) -> list[dict[str, Any]]:
-    with path.open("r", encoding="utf-8") as fh:
-        return json.load(fh)
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def load_csv(path: Path) -> list[dict[str, Any]]:
@@ -101,167 +55,179 @@ def load_csv(path: Path) -> list[dict[str, Any]]:
         return list(csv.DictReader(fh))
 
 
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 def normalize_lead(raw: dict[str, Any], index: int, source_file: str = "") -> dict[str, Any]:
-    title = str(raw.get("title", "")).strip() or f"Lead manuel {index}"
-    normalized = {
-        "id": str(raw.get("id") or f"inbox-{index:03d}"),
-        "title": title,
+    missing = []
+    city = normalize_city(str(raw.get("city", "")))
+    trade = normalize_trade(str(raw.get("trade_hint", "")))
+    if city in {"", "Inconnue"}:
+        missing.append("city")
+    if not trade:
+        missing.append("trade_hint")
+
+    evidence_url = str(raw.get("evidence_url") or "")
+    evidence_status = "CONFIRMÉ" if evidence_url else "PARTIEL"
+    confidence = float(raw.get("confidence", 0.6) or 0.6)
+    if not evidence_url:
+        confidence = max(0.2, confidence - 0.15)
+
+    budget = parse_budget(raw.get("budget_eur"))
+    budget_conf = "EXACT" if budget > 0 else "ESTIMÉ"
+    if budget == 0:
+        budget = 3000
+
+    return {
+        "id": str(raw.get("id") or f"lead-{index:03d}"),
+        "title": str(raw.get("title") or f"Lead {index}").strip(),
         "description": str(raw.get("description", "")).strip(),
-        "city": normalize_city(str(raw.get("city", ""))),
+        "city": city,
         "zip_code": str(raw.get("zip_code", "")).strip(),
-        "trade_hint": normalize_trade(str(raw.get("trade_hint", ""))),
-        "budget_eur": parse_budget(raw.get("budget_eur")),
-        "urgency": normalize_urgency(str(raw.get("urgency", ""))),
-        "source": str(raw.get("source") or ("inbox_manual" if source_file else "unknown")),
-        "confidence": normalize_confidence(raw.get("confidence", 0.6)),
-        "pipeline_status": str(raw.get("pipeline_status") or STATUS_NEW),
+        "country": str(raw.get("country") or "FR").strip(),
+        "trade_hint": trade,
+        "normalized_trade": trade,
+        "budget_eur": budget,
+        "budget_confidence": budget_conf,
+        "urgency": str(raw.get("urgency") or "medium"),
+        "urgency_reason": str(raw.get("urgency_reason") or "Déduit du texte"),
+        "source": str(raw.get("source") or ("inbox_manual" if source_file else "demo")),
+        "source_type": str(raw.get("source_type") or "demo"),
+        "evidence_url": evidence_url,
+        "evidence_source_id": str(raw.get("evidence_source_id") or "manual_url"),
+        "evidence_collected_at": str(raw.get("evidence_collected_at") or now_iso()),
+        "evidence_raw_excerpt": str(raw.get("evidence_raw_excerpt") or raw.get("description", ""))[:180],
+        "evidence_summary": str(raw.get("evidence_summary") or "Preuve à valider"),
+        "evidence_confidence": round(confidence, 2),
+        "evidence_status": str(raw.get("evidence_status") or evidence_status),
+        "uncertainty_notes": str(raw.get("uncertainty_notes") or ("URL absente" if not evidence_url else "")),
+        "confidence": round(confidence, 2),
+        "pipeline_status": raw.get("pipeline_status") if raw.get("pipeline_status") in PIPELINE_STATUSES else STATUS_NEW,
+        "qualification_status": "À_VALIDER" if missing else "QUALIFIÉ",
+        "missing_fields": missing,
+        "risk_flags": ["MISSING_FIELDS"] if missing else [],
     }
-    if normalized["pipeline_status"] not in PIPELINE_STATUSES:
-        normalized["pipeline_status"] = STATUS_NEW
-    return normalized
 
 
-def ingest_sources() -> list[dict[str, Any]]:
-    all_raw = load_json(DATA_DIR / "sources" / "demo_public_signals.json")
-    for inbox_file in sorted(INBOX_DIR.glob("*.json")):
-        all_raw.extend(load_json(inbox_file))
-    for inbox_file in sorted(INBOX_DIR.glob("*.csv")):
-        all_raw.extend(load_csv(inbox_file))
-    return [normalize_lead(item, idx + 1) for idx, item in enumerate(all_raw)]
-
-
-def deduplicate_leads(leads: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    uniques: list[dict[str, Any]] = []
-    duplicates: list[dict[str, Any]] = []
-    for lead in leads:
-        dup = None
-        for seen in uniques:
-            similar_title = (set(strip_accents(lead["title"].lower()).split()) & set(strip_accents(seen["title"].lower()).split()))
-            budget_close = abs(lead["budget_eur"] - seen["budget_eur"]) <= 500
-            if lead["city"] == seen["city"] and lead["trade_hint"] == seen["trade_hint"] and len(similar_title) >= 2 and budget_close:
-                dup = seen
-                break
-        if dup:
-            duplicates.append({"duplicate_id": lead["id"], "original_id": dup["id"], "city": lead["city"], "trade_hint": lead["trade_hint"]})
-        else:
-            uniques.append(lead)
-    return uniques, duplicates
-
-
-def score_lead(lead: dict[str, Any], city_weights: dict[str, float], artisans: list[dict[str, Any]]) -> float:
-    budget = min((lead["budget_eur"] / 20000.0) * 25.0, 25.0)
-    urgency = {"low": 7.0, "medium": 13.0, "high": 20.0}.get(lead["urgency"], 10.0)
-    clarity = min((len(lead["title"]) + len(lead["description"])) / 18.0, 15.0)
-    rentable = 15.0 if lead["trade_hint"] in RENTABLE_TRADES else 8.0
-    source = SOURCE_SCORE.get(lead["source"], 5)
-    has_match = any(a["trade"] == lead["trade_hint"] and lead["city"] in a["cities"] and a["capacity"] > 0 for a in artisans)
-    matching = 10.0 if has_match else 2.0
-    confidence = lead["confidence"] * 5.0
-    city_boost = city_weights.get(lead["city"], 1.0)
-    total = (budget + urgency + clarity + rentable + source + matching + confidence) * city_boost
-    return round(min(100.0, total), 2)
+def score_lead(lead: dict[str, Any], artisans: list[dict[str, Any]]) -> tuple[int, dict[str, int]]:
+    budget_score = min(25, int(lead["budget_eur"] / 1200))
+    urgency_score = {"low": 5, "medium": 10, "high": 15}.get(lead["urgency"], 8)
+    clarity_score = min(10, int((len(lead["title"]) + len(lead["description"])) / 28))
+    evidence_score = {"ESTIMÉ": 4, "PARTIEL": 9, "CONFIRMÉ": 15, "À_VALIDER": 6}.get(lead["evidence_status"], 6)
+    trade_profitability_score = 10 if lead["normalized_trade"] in {"rénovation", "toiture", "chauffage", "électricité"} else 6
+    location_score = 5 if lead["city"] != "Inconnue" else 1
+    artisan_match_score = 10 if any(lead["normalized_trade"] in a.get("trades", []) for a in artisans) else 2
+    closing_probability_score = 5 if lead["urgency"] == "high" else 3
+    confidence_score = int(max(0, min(5, round(lead["confidence"] * 5))))
+    breakdown = {
+        "budget_score": budget_score,
+        "urgency_score": urgency_score,
+        "clarity_score": clarity_score,
+        "evidence_score": evidence_score,
+        "trade_profitability_score": trade_profitability_score,
+        "location_score": location_score,
+        "artisan_match_score": artisan_match_score,
+        "closing_probability_score": closing_probability_score,
+        "confidence_score": confidence_score,
+    }
+    return sum(breakdown.values()), breakdown
 
 
 def category_from_score(score: float) -> str:
-    for label, threshold in CATEGORY_THRESHOLDS:
-        if score >= threshold:
-            return label
-    return "PETIT"
+    if score >= 85:
+        return "TITAN"
+    if score >= 70:
+        return "GROS"
+    if score >= 55:
+        return "MOYEN"
+    if score >= 40:
+        return "PETIT"
+    return "FAIBLE"
 
 
-def load_city_weights() -> dict[str, float]:
-    cfg_path = BASE_DIR / "config" / "cities.yaml"
-    city_weights: dict[str, float] = {}
-    current_city: str | None = None
-    for line in cfg_path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("- name:"):
-            current_city = stripped.split(":", 1)[1].strip()
-        elif stripped.startswith("priority_weight:") and current_city:
-            city_weights[current_city] = float(stripped.split(":", 1)[1].strip())
-    return city_weights
+def ingest_sources() -> list[dict[str, Any]]:
+    rows = load_json(DATA_DIR / "sources" / "demo_public_signals.json")
+    for p in sorted(INBOX_DIR.glob("*.json")):
+        rows.extend(load_json(p))
+    for p in sorted(INBOX_DIR.glob("*.csv")):
+        rows.extend(load_csv(p))
+    return [normalize_lead(r, i + 1) for i, r in enumerate(rows)]
 
 
-def match_artisans(leads_with_scores: list[dict[str, Any]], artisans: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    enriched: list[dict[str, Any]] = []
-    for lead in leads_with_scores:
-        compatible = [a for a in artisans if a["trade"] == lead["trade_hint"] and lead["city"] in a["cities"] and a["capacity"] > 0]
-        compatible.sort(key=lambda a: (a["quality_score"], a["capacity"]), reverse=True)
-        selected = compatible[0] if compatible else None
-        copy = dict(lead)
-        copy["matched_artisan"] = selected
-        enriched.append(copy)
-    return enriched
+def match_artisans(leads: list[dict[str, Any]], artisans: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    for lead in leads:
+        compatibles = [a for a in artisans if lead["normalized_trade"] in a.get("trades", []) and a.get("city") == lead["city"]]
+        compatibles.sort(key=lambda x: (x.get("rating", 0), x.get("reviews_count", 0), x.get("confidence", 0)), reverse=True)
+        lead["artisan_recommended"] = compatibles[0] if compatibles else {"name": "Aucun artisan fiable trouvé, validation humaine nécessaire"}
+        lead["artisan_alternatives"] = compatibles[1:4]
+        lead["matching_reason"] = "Métier + zone + réputation" if compatibles else "Validation humaine requise"
+    return leads
 
 
-def generate_markdown_report(scored_leads: list[dict[str, Any]], duplicates: list[dict[str, Any]], output_path: Path) -> None:
-    now = datetime.now(timezone.utc).isoformat()
-    by_city: dict[str, int] = {}
-    by_trade: dict[str, int] = {}
-    by_cat: dict[str, int] = {}
-    missing = 0
-    for lead in scored_leads:
-        by_city[lead["city"]] = by_city.get(lead["city"], 0) + 1
-        by_trade[lead["trade_hint"]] = by_trade.get(lead["trade_hint"], 0) + 1
-        by_cat[lead["category"]] = by_cat.get(lead["category"], 0) + 1
-        if not lead["description"] or not lead["zip_code"]:
-            missing += 1
-
-    lines = ["# Atlas Rapporteur d’Affaires — Rapport V0.5", "", f"Généré le: {now}", "", "## Résumé exécutif", f"- Leads retenus: {len(scored_leads)}", f"- Doublons détectés: {len(duplicates)}", f"- Champs incomplets: {missing}", "", "## Top 10 leads", "", "| Rang | ID | Ville | Métier | Score | Catégorie | Statut |", "|---:|---|---|---|---:|---|---|"]
-    for idx, lead in enumerate(scored_leads[:10], start=1):
-        lines.append(f"| {idx} | {lead['id']} | {lead['city']} | {lead['trade_hint']} | {lead['score']} | {lead['category']} | {lead['pipeline_status']} |")
-    lines += ["", "## Totaux par ville"] + [f"- {k}: {v}" for k, v in sorted(by_city.items())]
-    lines += ["", "## Totaux par métier"] + [f"- {k}: {v}" for k, v in sorted(by_trade.items())]
-    lines += ["", "## Totaux par catégorie"] + [f"- {k}: {v}" for k, v in sorted(by_cat.items())]
-    lines += ["", "## Doublons détectés"] + ([f"- {d['duplicate_id']} ~ {d['original_id']} ({d['city']}/{d['trade_hint']})" for d in duplicates] or ["- Aucun"]) 
-    lines += ["", "## Leads à appeler en priorité"]
-    for lead in [l for l in scored_leads if l["pipeline_status"] in {"NOUVEAU", "À_APPELER"}][:5]:
-        lines.append(f"- {lead['id']} ({lead['title']}) score={lead['score']}")
-    lines += ["", "## Artisans recommandés"]
-    for lead in scored_leads[:10]:
-        artisan = lead.get("matched_artisan")
-        lines.append(f"- {lead['id']}: {(artisan or {}).get('name', 'Aucun')}" )
-    lines += ["", "## Incertitudes / champs manquants", f"- Nombre de leads incomplets: {missing}"]
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
-def export_csv(scored_leads: list[dict[str, Any]], output_path: Path) -> None:
-    fieldnames = ["id", "title", "description", "city", "zip_code", "trade_hint", "budget_eur", "urgency", "source", "confidence", "pipeline_status", "score", "category", "matched_artisan_name", "matched_artisan_id"]
-    with output_path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        for lead in scored_leads:
-            artisan = lead.get("matched_artisan") or {}
-            writer.writerow({**{k: lead.get(k, "") for k in fieldnames}, "matched_artisan_name": artisan.get("name", ""), "matched_artisan_id": artisan.get("artisan_id", "")})
-
-
-def run_pipeline() -> dict[str, Any]:
-    for d in (OUTPUTS_DIR, REPORTS_DIR, EXPORT_DIR, INBOX_DIR):
+def run_pipeline(mode: str = "run") -> dict[str, Any]:
+    for d in [RUNTIME_DIR / "reports", RUNTIME_DIR / "export", RUNTIME_DIR / "closer", RUNTIME_DIR / "crm", RUNTIME_DIR / "matching", RUNTIME_DIR / "evidence", RUNTIME_DIR / "outputs", INBOX_DIR]:
         d.mkdir(parents=True, exist_ok=True)
-    city_weights = load_city_weights()
     artisans = load_json(DATA_DIR / "artisans" / "demo_artisans.json")
-    raw_leads = ingest_sources()
-    unique_leads, duplicates = deduplicate_leads(raw_leads)
-    scored = []
-    for lead in unique_leads:
-        item = dict(lead)
-        item["score"] = score_lead(item, city_weights, artisans)
-        item["category"] = category_from_score(item["score"])
-        scored.append(item)
-    scored.sort(key=lambda x: x["score"], reverse=True)
-    matched = match_artisans(scored, artisans)
+    leads = ingest_sources()
+    for lead in leads:
+        lead["score"], lead["score_breakdown"] = score_lead(lead, artisans)
+        lead["category"] = category_from_score(lead["score"])
+        lead["qualification_status"] = "PRIORITAIRE" if lead["category"] in {"TITAN", "GROS"} else lead["qualification_status"]
+    leads = sorted(match_artisans(leads, artisans), key=lambda x: x["score"], reverse=True)
 
-    report_path = REPORTS_DIR / "lead_report.md"
-    export_json_path = EXPORT_DIR / "leads_ranked.json"
-    export_csv_path = EXPORT_DIR / "leads_ranked.csv"
-    execution_summary_path = OUTPUTS_DIR / "run_summary.json"
-    generate_markdown_report(matched, duplicates, report_path)
-    export_json_path.write_text(json.dumps({"leads": matched, "duplicates": duplicates}, ensure_ascii=False, indent=2), encoding="utf-8")
-    export_csv(matched, export_csv_path)
-    summary = {"status": "ok", "version": "v0.5", "leads_processed": len(matched), "duplicates_detected": len(duplicates), "report": str(report_path), "export": str(export_json_path), "export_csv": str(export_csv_path), "execution_summary": str(execution_summary_path)}
-    execution_summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    evidence_log = [{k: l[k] for k in ["id", "evidence_url", "evidence_source_id", "evidence_collected_at", "evidence_raw_excerpt", "evidence_status", "uncertainty_notes"]} for l in leads]
+    (RUNTIME_DIR / "evidence" / "evidence_log.json").write_text(json.dumps(evidence_log, ensure_ascii=False, indent=2), encoding="utf-8")
+    (RUNTIME_DIR / "matching" / "matches.json").write_text(json.dumps(leads, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    call_updates = load_csv(INBOX_DIR / "call_updates.csv") if (INBOX_DIR / "call_updates.csv").exists() else []
+    for c in call_updates:
+        if c.get("call_status") in CALL_STATUSES:
+            for l in leads:
+                if l["id"] == c.get("lead_id"):
+                    l["pipeline_status"] = "APPELÉ" if c["call_status"] in {"CONTACTÉ", "APPELÉ_SANS_RÉPONSE"} else l["pipeline_status"]
+                    l["last_action_at"] = c.get("called_at", now_iso())
+                    l["next_action_at"] = c.get("next_action_at", "")
+    (RUNTIME_DIR / "crm" / "call_log.json").write_text(json.dumps(call_updates, ensure_ascii=False, indent=2), encoding="utf-8")
+    (RUNTIME_DIR / "crm" / "leads_history.json").write_text(json.dumps(leads, ensure_ascii=False, indent=2), encoding="utf-8")
+    (RUNTIME_DIR / "crm" / "status_changes.json").write_text(json.dumps([{"lead_id": l["id"], "pipeline_status": l["pipeline_status"]} for l in leads], ensure_ascii=False, indent=2), encoding="utf-8")
+
+    report = RUNTIME_DIR / "reports" / "lead_report.md"
+    lines = ["# Atlas Rapporteur d’Affaires — Rapport V0.6", "", "## Résumé exécutif", f"- Leads traités: {len(leads)}", f"- Leads TITAN: {sum(1 for l in leads if l['category']=='TITAN')}"]
+    lines += ["", "## Top 10 leads"]
+    for i, l in enumerate(leads[:10], 1):
+        lines.append(f"- {i}. {l['id']} | {l['city']} | {l['normalized_trade']} | {l['score']} ({l['category']})")
+        lines.append(f"  - Preuve: {l['evidence_url'] or 'N/A'} | Collecte: {l['evidence_collected_at']} | Confiance: {l['evidence_confidence']}")
+    lines += ["", "## Suivi appels", f"- Leads appelés: {sum(1 for l in leads if l.get('pipeline_status')=='APPELÉ')}"]
+    report.write_text("\n".join(lines)+"\n", encoding="utf-8")
+
+    export_json = RUNTIME_DIR / "export" / "leads_ranked.json"
+    export_json.write_text(json.dumps({"leads": leads}, ensure_ascii=False, indent=2), encoding="utf-8")
+    with (RUNTIME_DIR / "export" / "leads_ranked.csv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=["id", "city", "normalized_trade", "score", "category", "pipeline_status", "evidence_url"])
+        w.writeheader(); [w.writerow({k: l.get(k, "") for k in w.fieldnames}) for l in leads]
+
+    closer_md = RUNTIME_DIR / "closer" / "daily_call_sheet.md"
+    closer_lines = ["# Daily Call Sheet", "", "| ordre | lead_id | ville | métier | titre | budget | score | catégorie | preuve | artisan | prochaine action |", "|---:|---|---|---|---|---:|---:|---|---|---|---|"]
+    for i, l in enumerate(leads[:15], 1):
+        closer_lines.append(f"| {i} | {l['id']} | {l['city']} | {l['normalized_trade']} | {l['title']} | {l['budget_eur']} | {l['score']} | {l['category']} | {(l['evidence_summary'] or '')[:40]} | {l['artisan_recommended'].get('name','')} | {l.get('next_action_at','À planifier')} |")
+    closer_lines += ["", "Script d'appel: présenter Atlas, ne rien promettre, vérifier le besoin réel, demander accord avant transmission, noter consentement/refus."]
+    closer_md.write_text("\n".join(closer_lines)+"\n", encoding="utf-8")
+    (RUNTIME_DIR / "closer" / "priority_leads.md").write_text("\n".join([f"- {l['id']} {l['score']}" for l in leads if l['category'] in {'TITAN','GROS'}]), encoding="utf-8")
+    with (RUNTIME_DIR / "closer" / "daily_call_sheet.csv").open("w", encoding="utf-8", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=["order","lead_id","city","trade","title","budget","score","category"]); w.writeheader()
+        for i,l in enumerate(leads[:15],1): w.writerow({"order":i,"lead_id":l["id"],"city":l["city"],"trade":l["normalized_trade"],"title":l["title"],"budget":l["budget_eur"],"score":l["score"],"category":l["category"]})
+
+    summary = {"status":"ok","report":str(report),"export":str(export_json),"export_csv":str(RUNTIME_DIR / "export" / "leads_ranked.csv"),"execution_summary":str(RUNTIME_DIR / "outputs" / "run_summary.json"),"total":len(leads)}
+    (RUNTIME_DIR / "outputs" / "run_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
 
 
 if __name__ == "__main__":
-    print(json.dumps(run_pipeline(), indent=2, ensure_ascii=False))
+    import sys
+    mode = sys.argv[1] if len(sys.argv) > 1 else "run"
+    s = run_pipeline(mode)
+    if mode == "crm-summary":
+        print("CRM summary:", s["total"])
+    print("ATLAS RAPPORTEUR D’AFFAIRES — V0.6")
+    print("Status: OK")
