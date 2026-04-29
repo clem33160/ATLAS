@@ -1,0 +1,2 @@
+artisan_id,name,city,zip_code,country,trades,rating,reviews_count,phone,website,source_url,confidence,availability_status,notes
+man-001,Artisan Manuel Demo,Lyon,69001,FR,plomberie,4.6,12,,https://example.org/artisan,https://example.org/artisan,0.7,INCONNU,EXAMPLE
