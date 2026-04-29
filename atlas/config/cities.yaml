@@ -1,0 +1,17 @@
+# Configuration métier/villes pour Atlas Rapporteur d’Affaires (V0)
+version: v0
+cities:
+  - name: Lyon
+    zip_prefixes: ["69"]
+    priority_weight: 1.2
+  - name: Marseille
+    zip_prefixes: ["13"]
+    priority_weight: 1.1
+  - name: Toulouse
+    zip_prefixes: ["31"]
+    priority_weight: 1.0
+trades:
+  - plomberie
+  - électricité
+  - maçonnerie
+  - peinture

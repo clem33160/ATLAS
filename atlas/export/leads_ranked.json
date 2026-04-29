@@ -1,0 +1,90 @@
+[
+  {
+    "id": "src-004",
+    "title": "Extension terrasse béton",
+    "description": "Besoin maçon pour dalle et finitions.",
+    "city": "Lyon",
+    "zip_code": "69007",
+    "trade_hint": "maçonnerie",
+    "budget_eur": 7600,
+    "urgency": "medium",
+    "source": "annuaire_demo",
+    "score": 13.92,
+    "matched_artisan": {
+      "artisan_id": "art-004",
+      "name": "BatiLyon Maçonnerie",
+      "trade": "maçonnerie",
+      "cities": [
+        "Lyon"
+      ],
+      "capacity": 1,
+      "quality_score": 4.6
+    }
+  },
+  {
+    "id": "src-001",
+    "title": "Rénovation salle de bain urgente",
+    "description": "Recherche plombier pour fuite et remplacement douche.",
+    "city": "Lyon",
+    "zip_code": "69003",
+    "trade_hint": "plomberie",
+    "budget_eur": 4200,
+    "urgency": "high",
+    "source": "forum_local_demo",
+    "score": 12.24,
+    "matched_artisan": {
+      "artisan_id": "art-001",
+      "name": "Plombier Express Lyon",
+      "trade": "plomberie",
+      "cities": [
+        "Lyon"
+      ],
+      "capacity": 2,
+      "quality_score": 4.7
+    }
+  },
+  {
+    "id": "src-002",
+    "title": "Remise aux normes tableau électrique",
+    "description": "Maison ancienne, travaux sous 2 mois.",
+    "city": "Marseille",
+    "zip_code": "13008",
+    "trade_hint": "électricité",
+    "budget_eur": 3100,
+    "urgency": "medium",
+    "source": "annonce_demo",
+    "score": 7.81,
+    "matched_artisan": {
+      "artisan_id": "art-002",
+      "name": "Volt Pro Méditerranée",
+      "trade": "électricité",
+      "cities": [
+        "Marseille"
+      ],
+      "capacity": 3,
+      "quality_score": 4.4
+    }
+  },
+  {
+    "id": "src-003",
+    "title": "Peinture appartement T3",
+    "description": "Rafraîchissement murs et plafonds.",
+    "city": "Toulouse",
+    "zip_code": "31200",
+    "trade_hint": "peinture",
+    "budget_eur": 1800,
+    "urgency": "low",
+    "source": "groupe_voisinage_demo",
+    "score": 3.8,
+    "matched_artisan": {
+      "artisan_id": "art-003",
+      "name": "Peintures Occitanes",
+      "trade": "peinture",
+      "cities": [
+        "Toulouse"
+      ],
+      "capacity": 2,
+      "quality_score": 4.2
+    }
+  }
+]

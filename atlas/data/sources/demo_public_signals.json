@@ -1,0 +1,46 @@
+[
+  {
+    "id": "src-001",
+    "title": "Rénovation salle de bain urgente",
+    "description": "Recherche plombier pour fuite et remplacement douche.",
+    "city": "Lyon",
+    "zip_code": "69003",
+    "trade_hint": "plomberie",
+    "budget_eur": 4200,
+    "urgency": "high",
+    "source": "forum_local_demo"
+  },
+  {
+    "id": "src-002",
+    "title": "Remise aux normes tableau électrique",
+    "description": "Maison ancienne, travaux sous 2 mois.",
+    "city": "Marseille",
+    "zip_code": "13008",
+    "trade_hint": "électricité",
+    "budget_eur": 3100,
+    "urgency": "medium",
+    "source": "annonce_demo"
+  },
+  {
+    "id": "src-003",
+    "title": "Peinture appartement T3",
+    "description": "Rafraîchissement murs et plafonds.",
+    "city": "Toulouse",
+    "zip_code": "31200",
+    "trade_hint": "peinture",
+    "budget_eur": 1800,
+    "urgency": "low",
+    "source": "groupe_voisinage_demo"
+  },
+  {
+    "id": "src-004",
+    "title": "Extension terrasse béton",
+    "description": "Besoin maçon pour dalle et finitions.",
+    "city": "Lyon",
+    "zip_code": "69007",
+    "trade_hint": "maçonnerie",
+    "budget_eur": 7600,
+    "urgency": "medium",
+    "source": "annuaire_demo"
+  }
+]
