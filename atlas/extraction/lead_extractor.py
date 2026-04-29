@@ -1,26 +1,24 @@
 from __future__ import annotations
-import re
-from .patterns import TRADES, URGENT_KEYWORDS
+from .patterns import URGENT_KEYWORDS, MARKET_KEYWORDS, DIRECTORY_KEYWORDS, AD_KEYWORDS, CLIENT_KEYWORDS
+from .geography import detect_city_country_zip
+from .trades import detect_trade
+from .budget import detect_budget
+
+
+def detect_intent_type(text:str)->str:
+    t=(text or '').lower()
+    if any(k in t for k in MARKET_KEYWORDS): return 'PUBLIC_MARKET'
+    if any(k in t for k in DIRECTORY_KEYWORDS): return 'DIRECTORY_PAGE'
+    if any(k in t for k in AD_KEYWORDS): return 'ARTISAN_AD'
+    if any(k in t for k in CLIENT_KEYWORDS): return 'CLIENT_REQUEST'
+    if len(t)<80: return 'GENERIC_PAGE'
+    return 'UNKNOWN'
 
 
 def extract_signals(text: str) -> dict:
-    t = (text or "").lower()
-    trade = next((x for x in TRADES if x in t), "")
-    urgency = "high" if any(k in t for k in URGENT_KEYWORDS) else "medium"
-    budget_m = re.findall(r"(\d{2,6})\s*€", t)
-    city = ""
-    for c in ["lyon", "marseille", "toulouse", "paris"]:
-        if c in t:
-            city = c.title()
-            break
-    zip_match = re.search(r"\b(\d{5})\b", t)
-    return {
-        "city": city,
-        "zip_code": zip_match.group(1) if zip_match else "",
-        "trade_hint": trade,
-        "budget_eur": int(budget_m[0]) if budget_m else 0,
-        "budget_confidence": "EXACT" if budget_m else "FAIBLE",
-        "urgency": urgency,
-        "keywords": [k for k in URGENT_KEYWORDS if k in t],
-        "incertitudes": ["ville inconnue"] if not city else [],
-    }
+    geo=detect_city_country_zip(text)
+    tr=detect_trade(text)
+    bd=detect_budget(text)
+    t=(text or '').lower()
+    urgency='high' if any(k in t for k in URGENT_KEYWORDS) else 'medium'
+    return {**geo, **tr, **bd, 'urgency':urgency, 'intent_type':detect_intent_type(text)}

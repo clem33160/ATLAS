@@ -1,0 +1,51 @@
+source_packs:
+  - pack_id: FR_TRAVAUX_PUBLICS
+    pays: FR
+    objectif: leads travaux publics
+    sources_officielles_prioritaires: [BOAMP, PLACE, data.gouv.fr]
+    sources_candidates_privees_disabled: [pagesjaunes]
+    types_leads_attendus: [PUBLIC_MARKET]
+    types_artisans_attendus: [SIRENE, RGE, OFFICIAL_DIRECTORY]
+    risque_legal: faible
+    mode_autorise: manual_url_only
+    instructions_humaines: validation CGU
+  - pack_id: FR_ARTISANS_VERIFIABLES
+    pays: FR
+    objectif: artisans vérifiables
+    sources_officielles_prioritaires: [Annuaire Entreprises, INSEE, France Renov, CMA]
+    sources_candidates_privees_disabled: [private_scraper]
+    types_leads_attendus: [CLIENT_REQUEST]
+    types_artisans_attendus: [OFFICIAL_DIRECTORY, RGE, SIRENE]
+    risque_legal: faible
+    mode_autorise: manual_url_only
+    instructions_humaines: vérification humaine obligatoire
+  - pack_id: BE_TRAVAUX_PUBLICS
+    pays: BE
+    objectif: marchés publics
+    sources_officielles_prioritaires: [publications belges]
+    sources_candidates_privees_disabled: [all]
+    types_leads_attendus: [PUBLIC_MARKET]
+    types_artisans_attendus: [OFFICIAL_DIRECTORY]
+    risque_legal: moyen
+    mode_autorise: manual_url_only
+    instructions_humaines: validation humaine obligatoire
+  - pack_id: CH_ROMANDIE_ARTISANS
+    pays: CH
+    objectif: artisans romands
+    sources_officielles_prioritaires: [sources publiques suisses]
+    sources_candidates_privees_disabled: [all]
+    types_leads_attendus: [CLIENT_REQUEST]
+    types_artisans_attendus: [OFFICIAL_DIRECTORY]
+    risque_legal: moyen
+    mode_autorise: manual_url_only
+    instructions_humaines: validation humaine obligatoire
+  - pack_id: CA_FRANCOPHONE
+    pays: CA
+    objectif: sources québécoises
+    sources_officielles_prioritaires: [sources publiques québécoises]
+    sources_candidates_privees_disabled: [all]
+    types_leads_attendus: [CLIENT_REQUEST, PUBLIC_MARKET]
+    types_artisans_attendus: [OFFICIAL_DIRECTORY]
+    risque_legal: moyen
+    mode_autorise: manual_url_only
+    instructions_humaines: validation humaine obligatoire
