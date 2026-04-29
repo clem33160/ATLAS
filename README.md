@@ -1,40 +1,35 @@
-# Atlas Rapporteur d’Affaires V0.9 - Business réel et anti-hallucination
+# Atlas Rapporteur d’Affaires V0.10 — Nettoyage canonique et qualité code
 
-Atlas V0.9 vise un socle business réel et vérifiable.
+La V0.10 stabilise l’existant : architecture claire, responsabilités séparées, pipeline lisible, tests renforcés.
 
-- Objectif futur: **50 leads/jour**.
-- V0.9 **ne promet pas** 50 vrais leads/jour.
-- Les vrais leads exigent des URLs publiques précises + validation humaine.
-- Aucun lead/artisan/téléphone/site inventé comme réel.
+- V0.10 **n’ajoute pas de gros nouveau scraping**.
+- Atlas **ne produit pas encore automatiquement 50 vrais leads/jour**.
+- **50 leads/jour** reste un objectif futur.
+- Un business 10/10 exige : URLs réelles, artisans vérifiables, retours d’appels, validation humaine.
+- Les données DEMO ne doivent jamais être appelées ni vendues comme réelles.
 
-## Ajouter des URLs
+## Règles anti-faux réel
 
-Remplir `atlas/inbox/source_urls.txt`:
+- Aucun lead DEMO en `BUSINESS_READY`.
+- Aucun domaine `example.org`, `example.local`, `example.com` en preuve réelle.
+- Aucun `HUMAN_CONFIRMED` sans action CRM humaine.
 
-- `url`
-- ou `source_id|url|note|country|city_hint|trade_hint`
+## Ajouter des URLs publiques
+
+Éditer `atlas/inbox/source_urls.txt` (format `source_id|url|note` ou `url`).
 
 ## Ajouter des artisans vérifiables
 
-- importer des artisans manuels avec `source_url`
-- privilégier sources officielles (RGE/SIRENE/annuaires)
+Utiliser des fiches artisan avec URL vérifiable (source officielle/annuaire pro) dans `atlas/inbox/`.
 
-## Ajouter les retours d’appels
-
-- alimenter le CRM runtime via process humain (aucune auto-invention)
-
-## Lire le score business
+## Vérifier Business Readiness
 
 - `atlas/runtime/business/business_readiness.json`
 - `atlas/runtime/business/business_readiness.md`
 
-Le score affiche:
-- score actuel
-- score maximal avec données disponibles
-- blocages vers 10/10
-- actions concrètes pour progresser
+Le rapport indique score actuel, plafond actuel, blocages et actions exactes.
 
-## Commandes
+## Commandes Termux
 
 ```bash
 cd "$HOME/atlas_workspace/ATLAS"
