@@ -1,91 +1,56 @@
-# ATLAS — Rapporteur d’Affaires (V0.3)
+# ATLAS — Rapporteur d’Affaires (V0.5)
 
-Cette V0.3 fournit une démo locale **sans internet** pour:
-- ingérer des signaux publics de démonstration,
-- scorer des leads,
-- matcher des artisans,
-- générer un rapport Markdown enrichi,
-- générer un export JSON + CSV.
+V0.5 transforme la démo locale en base exploitable pour un rapporteur d’affaires local, **sans scraping internet réel**.
 
-## Structure
+## Principes légaux
+- Aucun scraping agressif.
+- Aucune connexion automatique à des services externes.
+- Aucune prise de contact automatique.
+- Atlas prépare des opportunités, un humain valide puis appelle.
 
-- `atlas/config/cities.yaml` : config métiers/villes (priorités)
-- `atlas/data/sources/demo_public_signals.json` : sources publiques démo
-- `atlas/data/artisans/demo_artisans.json` : artisans démo
-- `atlas/main.py` : pipeline complet V0.3
-- `atlas/scripts/run.sh` : lancement de la démo
-- `atlas/scripts/test.sh` : exécution des tests
-- `atlas/examples/` : exemples versionnés (statiques)
-- `atlas/runtime/` : sorties générées localement (runtime, ignorées par Git)
+## Nouveautés V0.5
+- Inbox locale `atlas/inbox/` pour ajout manuel de leads.
+- Import de leads en JSON et CSV.
+- Normalisation des champs (ville, métier, budget, urgence, confiance, etc.).
+- Déduplication simple (ville + métier + titre similaire + budget proche).
+- Scoring /100 détaillé et catégories `PETIT`, `MOYEN`, `GROS`, `TITAN`.
+- Statut pipeline (`NOUVEAU`, `À_APPELER`, `APPELÉ`, `INTÉRESSÉ`, `À_RELANCER`, `DEAL_POTENTIEL`, `SIGNÉ`, `PERDU`).
+- Rapport Markdown enrichi + exports JSON/CSV + résumé d’exécution JSON.
 
-## Exécution
+## Workflow Codex Web + GitHub + Termux
+1. Modifier via Codex Web (PR GitHub).
+2. Merger la PR sur GitHub.
+3. Sur Termux: pull, test, run.
 
-Depuis la racine du dépôt:
-
-```bash
-./atlas/scripts/run.sh
-```
-
-## Tests
-
+## Commandes exactes
 Depuis la racine du dépôt:
 
 ```bash
 ./atlas/scripts/test.sh
+./atlas/scripts/run.sh
 ```
 
-## Résultat attendu
+## Ajouter des leads manuels (`atlas/inbox/`)
+- JSON: `atlas/inbox/leads_manual_example.json`
+- CSV: `atlas/inbox/leads_manual_example.csv`
 
-Après exécution:
-- un rapport Markdown est disponible dans `atlas/runtime/reports/lead_report.md`
-- un export JSON est disponible dans `atlas/runtime/export/leads_ranked.json`
-- un export CSV est disponible dans `atlas/runtime/export/leads_ranked.csv`
-- un résumé est disponible dans `atlas/runtime/outputs/run_summary.json`
+Vous pouvez dupliquer ces fichiers et ajouter vos leads. Ils seront intégrés automatiquement au prochain run.
 
-## Mise à jour du dépôt depuis Termux
+## Sorties générées
+- Rapport: `atlas/runtime/reports/lead_report.md`
+- Export JSON complet: `atlas/runtime/export/leads_ranked.json`
+- Export CSV complet: `atlas/runtime/export/leads_ranked.csv`
+- Résumé d’exécution JSON: `atlas/runtime/outputs/run_summary.json`
 
-Pour éviter les conflits liés à des fichiers locaux générés, utilisez:
-
-```bash
-git pull --rebase --autostash
-```
-
-## Procédure Termux (Android)
-
-1. Installer les paquets requis:
-
+## Termux (Android)
 ```bash
 pkg update -y && pkg upgrade -y
 pkg install -y git python
-```
 
-2. Cloner le dépôt et se placer dedans:
-
-```bash
 git clone <URL_DU_DEPOT> ATLAS
 cd ATLAS
-```
 
-3. Mettre à jour le dépôt:
-
-```bash
 git pull --rebase --autostash
-```
-
-4. Lancer la démo locale (sans internet):
-
-```bash
+./atlas/scripts/test.sh
 ./atlas/scripts/run.sh
 ```
-
-5. Lancer les tests:
-
-```bash
-./atlas/scripts/test.sh
-```
-
-6. Vérifier les sorties:
-- `atlas/runtime/reports/lead_report.md`
-- `atlas/runtime/export/leads_ranked.json`
-- `atlas/runtime/export/leads_ranked.csv`
-- `atlas/runtime/outputs/run_summary.json` (résumé d’exécution)

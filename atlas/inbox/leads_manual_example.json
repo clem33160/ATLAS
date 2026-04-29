@@ -1,0 +1,15 @@
+[
+  {
+    "id": "manual-001",
+    "title": "Rafraîchissement appartement T2",
+    "description": "Peinture et petites reprises avant location.",
+    "city": "lyon",
+    "zip_code": "69008",
+    "trade_hint": "renovation",
+    "budget_eur": "3500",
+    "urgency": "moyenne",
+    "source": "inbox_manual",
+    "confidence": 0.72,
+    "pipeline_status": "À_APPELER"
+  }
+]
