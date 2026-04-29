@@ -7,6 +7,10 @@ Les sources privées sont désactivées par défaut.
 L’humain valide toujours les CGU et la preuve.
 Aucun contact automatique. Aucun scraping agressif.
 
+Objectif business: 50 leads qualifiés/jour (objectif futur).
+La version actuelle ne garantit pas encore 50 vrais leads/jour.
+Les vrais leads nécessitent des URLs publiques réelles et vérifiées humainement.
+
 ```bash
 cd "$HOME/atlas_workspace/ATLAS"
 git pull --rebase --autostash
