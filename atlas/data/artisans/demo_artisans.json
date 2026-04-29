@@ -9,26 +9,42 @@
   },
   {
     "artisan_id": "art-002",
-    "name": "Volt Pro Méditerranée",
-    "trade": "électricité",
+    "name": "ThermoSud Chauffage",
+    "trade": "chauffage",
     "cities": ["Marseille"],
     "capacity": 3,
-    "quality_score": 4.4
+    "quality_score": 4.5
   },
   {
     "artisan_id": "art-003",
-    "name": "Peintures Occitanes",
-    "trade": "peinture",
+    "name": "Serrure Minute Toulouse",
+    "trade": "serrurerie",
     "cities": ["Toulouse"],
     "capacity": 2,
-    "quality_score": 4.2
+    "quality_score": 4.6
   },
   {
     "artisan_id": "art-004",
-    "name": "BatiLyon Maçonnerie",
-    "trade": "maçonnerie",
+    "name": "Couverture Rhône-Alpes",
+    "trade": "toiture",
     "cities": ["Lyon"],
     "capacity": 1,
-    "quality_score": 4.6
+    "quality_score": 4.4
+  },
+  {
+    "artisan_id": "art-005",
+    "name": "Renova Méditerranée",
+    "trade": "rénovation",
+    "cities": ["Marseille"],
+    "capacity": 2,
+    "quality_score": 4.8
+  },
+  {
+    "artisan_id": "art-006",
+    "name": "Volt Pro Occitanie",
+    "trade": "électricité",
+    "cities": ["Toulouse"],
+    "capacity": 3,
+    "quality_score": 4.4
   }
 ]
