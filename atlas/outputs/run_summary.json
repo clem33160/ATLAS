@@ -1,6 +1,7 @@
 {
   "status": "ok",
-  "leads_processed": 4,
+  "leads_processed": 6,
   "report": "/workspace/ATLAS/atlas/reports/lead_report.md",
-  "export": "/workspace/ATLAS/atlas/export/leads_ranked.json"
+  "export": "/workspace/ATLAS/atlas/export/leads_ranked.json",
+  "export_csv": "/workspace/ATLAS/atlas/export/leads_ranked.csv"
 }

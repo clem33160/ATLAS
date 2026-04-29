@@ -1,0 +1,7 @@
+id,title,city,zip_code,trade_hint,budget_eur,urgency,source,score,category,matched_artisan_name,matched_artisan_id
+src-002,Chaudière en panne avant hiver,Marseille,13008,chauffage,7800,high,annonce_demo,100.0,TITAN,ThermoSud Chauffage,art-002
+src-004,Rénovation toiture maison ancienne,Lyon,69007,toiture,14500,medium,annuaire_demo,96.0,TITAN,Couverture Rhône-Alpes,art-004
+src-001,Fuite importante sous évier,Lyon,69003,plomberie,1800,high,forum_local_demo,90.0,TITAN,Plombier Express Lyon,art-001
+src-005,Rénovation complète studio,Marseille,13006,rénovation,22000,medium,plateforme_locale_demo,88.0,TITAN,Renova Méditerranée,art-005
+src-006,Mise aux normes électrique,Toulouse,31300,électricité,6400,medium,annonce_demo,80.0,GROS,Volt Pro Occitanie,art-006
+src-003,Porte claquée et serrure à changer,Toulouse,31200,serrurerie,1200,high,groupe_voisinage_demo,70.0,GROS,Serrure Minute Toulouse,art-003

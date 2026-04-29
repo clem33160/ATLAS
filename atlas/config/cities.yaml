@@ -12,6 +12,8 @@ cities:
     priority_weight: 1.0
 trades:
   - plomberie
+  - chauffage
+  - serrurerie
+  - toiture
+  - rénovation
   - électricité
-  - maçonnerie
-  - peinture
