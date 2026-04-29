@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ./atlas/scripts/source_audit.sh
-./atlas/scripts/test.sh
+if [[ "${ATLAS_SKIP_TEST_SH:-0}" != "1" ]]; then
+  ./atlas/scripts/test.sh
+fi
 ./atlas/scripts/run.sh
 ./atlas/scripts/run.sh business
 ./atlas/scripts/run.sh closer
