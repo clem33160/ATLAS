@@ -1,6 +1,6 @@
-# ATLAS — Rapporteur d’Affaires (V0.2)
+# ATLAS — Rapporteur d’Affaires (V0.3)
 
-Cette V0 fournit une démo locale **sans internet** pour:
+Cette V0.3 fournit une démo locale **sans internet** pour:
 - ingérer des signaux publics de démonstration,
 - scorer des leads,
 - matcher des artisans,
@@ -12,12 +12,11 @@ Cette V0 fournit une démo locale **sans internet** pour:
 - `atlas/config/cities.yaml` : config métiers/villes (priorités)
 - `atlas/data/sources/demo_public_signals.json` : sources publiques démo
 - `atlas/data/artisans/demo_artisans.json` : artisans démo
-- `atlas/main.py` : pipeline complet V0
+- `atlas/main.py` : pipeline complet V0.3
 - `atlas/scripts/run.sh` : lancement de la démo
 - `atlas/scripts/test.sh` : exécution des tests
-- `atlas/reports/lead_report.md` : rapport généré
-- `atlas/export/leads_ranked.json` : export JSON généré
-- `atlas/outputs/run_summary.json` : résumé d’exécution
+- `atlas/examples/` : exemples versionnés (statiques)
+- `atlas/runtime/` : sorties générées localement (runtime, ignorées par Git)
 
 ## Exécution
 
@@ -38,10 +37,18 @@ Depuis la racine du dépôt:
 ## Résultat attendu
 
 Après exécution:
-- un rapport Markdown est disponible dans `atlas/reports/lead_report.md`
-- un export JSON est disponible dans `atlas/export/leads_ranked.json`
-- un export CSV est disponible dans `atlas/export/leads_ranked.csv`
-- un résumé est disponible dans `atlas/outputs/run_summary.json`
+- un rapport Markdown est disponible dans `atlas/runtime/reports/lead_report.md`
+- un export JSON est disponible dans `atlas/runtime/export/leads_ranked.json`
+- un export CSV est disponible dans `atlas/runtime/export/leads_ranked.csv`
+- un résumé est disponible dans `atlas/runtime/outputs/run_summary.json`
+
+## Mise à jour du dépôt depuis Termux
+
+Pour éviter les conflits liés à des fichiers locaux générés, utilisez:
+
+```bash
+git pull --rebase --autostash
+```
 
 ## Procédure Termux (Android)
 
@@ -59,20 +66,26 @@ git clone <URL_DU_DEPOT> ATLAS
 cd ATLAS
 ```
 
-3. Lancer la démo locale (sans internet):
+3. Mettre à jour le dépôt:
+
+```bash
+git pull --rebase --autostash
+```
+
+4. Lancer la démo locale (sans internet):
 
 ```bash
 ./atlas/scripts/run.sh
 ```
 
-4. Lancer les tests:
+5. Lancer les tests:
 
 ```bash
 ./atlas/scripts/test.sh
 ```
 
-5. Vérifier les sorties:
-- `atlas/reports/lead_report.md`
-- `atlas/export/leads_ranked.json`
-- `atlas/export/leads_ranked.csv`
-- `atlas/outputs/run_summary.json` (résumé d’exécution)
+6. Vérifier les sorties:
+- `atlas/runtime/reports/lead_report.md`
+- `atlas/runtime/export/leads_ranked.json`
+- `atlas/runtime/export/leads_ranked.csv`
+- `atlas/runtime/outputs/run_summary.json` (résumé d’exécution)

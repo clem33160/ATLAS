@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Atlas Rapporteur d’Affaires - V0 ultra minimale.
+"""Atlas Rapporteur d’Affaires - V0.3.
 Pipeline local:
 1) ingestion de signaux publics démo
 2) scoring simple
@@ -9,18 +9,19 @@ Pipeline local:
 
 from __future__ import annotations
 
+import csv
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-import csv
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-OUTPUTS_DIR = BASE_DIR / "outputs"
-REPORTS_DIR = BASE_DIR / "reports"
-EXPORT_DIR = BASE_DIR / "export"
+RUNTIME_DIR = BASE_DIR / "runtime"
+OUTPUTS_DIR = RUNTIME_DIR / "outputs"
+REPORTS_DIR = RUNTIME_DIR / "reports"
+EXPORT_DIR = RUNTIME_DIR / "export"
 
 URGENCY_WEIGHTS = {"low": 1, "medium": 2, "high": 3}
 CATEGORY_THRESHOLDS = [
@@ -70,7 +71,6 @@ def category_from_score(score: float) -> str:
 
 
 def load_city_weights() -> dict[str, float]:
-    # Parser minimal YAML-like (suffisant pour notre fichier de config V0)
     cfg_path = BASE_DIR / "config" / "cities.yaml"
     city_weights: dict[str, float] = {}
     current_city: str | None = None
@@ -101,7 +101,7 @@ def match_artisans(leads_with_scores: list[dict[str, Any]], artisans: list[dict[
 def generate_markdown_report(scored_leads: list[dict[str, Any]], output_path: Path) -> None:
     now = datetime.now(timezone.utc).isoformat()
     lines = [
-        "# Atlas Rapporteur d’Affaires — Rapport V0",
+        "# Atlas Rapporteur d’Affaires — Rapport V0.3",
         "",
         f"Généré le: {now}",
         "",
