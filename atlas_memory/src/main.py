@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from . import active_context, audit_ledger, canon_store, health, objective_store, procedure_store, raw_store, self_memory, semantic_store
-from .common import ensure_runtime_structure, new_id, now_iso, read_json
+from .common import RUNTIME_PATHS, ensure_runtime_structure, new_id, now_iso, read_json, read_jsonl
 
 
 def cmd_init(_: argparse.Namespace) -> None:
@@ -50,9 +50,22 @@ def cmd_health(_: argparse.Namespace):
 
 def cmd_demo(_: argparse.Namespace):
     cmd_init(argparse.Namespace())
-    cmd_ingest(argparse.Namespace(kind="conversation", domain="rapporteur_affaires", content="client cherche plombier Lyon fuite urgente", source="demo", confidence=0.9))
-    evt = raw_store.list_events(limit=1)[0]
-    canon_store.promote_to_canon("rapporteur_affaires", evt["event_id"], "validated memory", True)
+    demo_content = "client cherche plombier Lyon fuite urgente"
+    existing_demo = [
+        e for e in read_jsonl(RUNTIME_PATHS["raw"])
+        if e.get("source") == "demo"
+        and e.get("domain") == "rapporteur_affaires"
+        and e.get("kind") == "conversation"
+        and e.get("content") == demo_content
+    ]
+    if existing_demo:
+        evt = existing_demo[-1]
+    else:
+        cmd_ingest(argparse.Namespace(kind="conversation", domain="rapporteur_affaires", content=demo_content, source="demo", confidence=0.9))
+        evt = raw_store.list_events(limit=1)[0]
+    canon = canon_store.get_canon("rapporteur_affaires")
+    if not any(e.get("event_id") == evt["event_id"] for e in canon.get("entries", [])):
+        canon_store.promote_to_canon("rapporteur_affaires", evt["event_id"], "validated memory", True)
     cmd_active(argparse.Namespace(task="améliorer rapporteur affaires", domain="rapporteur_affaires"))
     cmd_health(argparse.Namespace())
 
