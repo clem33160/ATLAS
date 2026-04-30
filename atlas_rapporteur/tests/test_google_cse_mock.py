@@ -45,3 +45,17 @@ def test_google_cse_mock_quota_exceeded(monkeypatch):
         assert "quota" in str(e)
     else:
         assert False
+
+
+def test_google_cse_mock_retry(monkeypatch):
+    monkeypatch.setenv("GOOGLE_CSE_API_KEY", "k")
+    monkeypatch.setenv("GOOGLE_CSE_CX", "cx")
+    calls = {"n": 0}
+    def fake_open(url, timeout=10):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise Exception("temp")
+        return Resp({"items": [{"title": "T", "link": "https://x", "snippet": "cherche plomberie Lyon"}]})
+    monkeypatch.setattr("urllib.request.urlopen", fake_open)
+    items, used = search_google_cse([{"query": "q", "city": "Lyon", "country": "france", "trade": "plomberie"}], limit=1, retries=1)
+    assert used == 1 and items

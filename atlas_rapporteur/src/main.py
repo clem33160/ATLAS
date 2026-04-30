@@ -1,108 +1,83 @@
 import argparse
 import json
-from datetime import date
+from pathlib import Path
 
-from .compliance import is_potential_lead
-from .config import BASE, load_budget, settings
-from .db import get_db, init_db
+from .business_dashboard import write_business_dashboard
+from .budget_guard import can_spend_query, register_query_cost, stop_reason_if_blocked
+from .config import BASE
 from .dedupe import dedupe_leads
+from .feedback_loop import run_feedback_loop
+from .lead_quality_gate import evaluate_result
 from .models import Lead
-from .query_builder import build_queries
+from .query_lab import log_query_run
+from .query_optimizer import build_query_candidates, select_next_queries
+from .quality_oracle import aggregate_query_performance, evaluate_quality, write_quality_reports
 from .reports import write_exports
 from .scoring import score_lead
 from .search_google_cse import google_cse_available, search_google_cse
+from .source_quality import evaluate_source_quality
 
 
 def _fixture_results():
     return json.loads((BASE / "data/fixtures/sample_search_results.json").read_text(encoding="utf-8"))
 
 
-def _daily_usage():
-    with get_db() as con:
-        row = con.execute("select coalesce(sum(queries),0), coalesce(sum(cost_eur),0) from budget_usage where day=?", (str(date.today()),)).fetchone()
-    return int(row[0]), float(row[1])
-
-
 def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summary=False):
-    init_db()
-    cfg = settings()
-    budget = load_budget()
-    query_limit = min(limit, cfg["daily_limit"], budget["max_queries_per_run"])
-    queries = build_queries(limit=query_limit, country=country, trade=trade, city=city)
+    query_limit = min(limit, 20)
+    queries = build_query_candidates(limit=query_limit, country=country, trade=trade, city=city)
     search_error = None
-    stopped_by_budget = False
-    rejected_results = []
-    query_costs = []
+    stop_reason = None
+    raw_results = []
 
     if mode == "google-cse":
         if not google_cse_available():
-            mode = "dry-run"
-        else:
-            used_today, cost_today = _daily_usage()
-            if used_today >= budget["max_queries_per_day"] or cost_today >= budget["max_daily_cost_eur"]:
-                stopped_by_budget = True
-                results = []
+            return ([], {"mode": "google-cse", "error": "Google CSE keys missing", "queries_used": 0, "estimated_cost_eur": 0.0, "stopped_by_budget": False}) if with_summary else []
+        usable = []
+        for q in queries:
+            if can_spend_query():
+                usable.append(q)
             else:
-                allowed = min(query_limit, budget["max_queries_per_day"] - used_today)
-                max_by_cost = int((budget["max_daily_cost_eur"] - cost_today) / cfg["cost_per_query_eur"])
-                allowed = min(allowed, max(0, max_by_cost))
-                if allowed <= 0:
-                    stopped_by_budget = True
-                    results = []
-                else:
-                    try:
-                        results, used = search_google_cse(
-                            queries[:allowed],
-                            limit=query_limit,
-                            logger_path=BASE / "runtime/audit/google_cse_queries.log",
-                        )
-                        for i in range(used):
-                            query_costs.append({"query": queries[i]["query"], "estimated_cost_eur": cfg["cost_per_query_eur"]})
-                    except Exception as e:
-                        search_error = str(e)
-                        results = []
-    if mode == "dry-run":
-        results = _fixture_results()
+                stop_reason = stop_reason_if_blocked()
+                break
+        try:
+            raw_results, used = search_google_cse(usable, limit=query_limit, logger_path=BASE / "runtime/audit/google_cse_queries.log")
+            for i in range(used):
+                register_query_cost(usable[i]["query"])
+        except Exception as e:
+            search_error = str(e)
+            raw_results = []
+    else:
+        raw_results = _fixture_results()[:query_limit]
 
+    evaluated = []
     leads = []
-    for r in results[:query_limit]:
-        lead = Lead(
-            title=r.get("title", ""),
-            url=r.get("url", ""),
-            snippet=r.get("snippet", ""),
-            city=r.get("city", "INCERTAIN"),
-            country=r.get("country", "INCERTAIN"),
-            trade=r.get("trade", "INCERTAIN"),
-            freshness_days=int(r.get("freshness_days", 3)),
-            urgency="URGENT" if "urgent" in r.get("snippet", "").lower() else "NORMAL",
-            contact_phone=r.get("contact_phone", "ABSENT"),
-            contact_email=r.get("contact_email", "ABSENT"),
-            contact_form=r.get("contact_form", "ABSENT"),
-            tier="TO_VALIDATE",
-        )
-        if is_potential_lead(lead):
+    rejected_results = []
+    for i, r in enumerate(raw_results):
+        status, evidence = evaluate_result(r)
+        item = {**r, "status": status, "evidence": evidence, "query": queries[min(i, len(queries)-1)]["query"] if queries else ""}
+        evaluated.append(item)
+        if status == "TO_VALIDATE":
+            lead = Lead(title=r.get("title", ""), url=r.get("url", ""), snippet=r.get("snippet", ""), city=r.get("city", "INCERTAIN"), country=r.get("country", "INCERTAIN"), trade=r.get("trade", "INCERTAIN"), tier="TO_VALIDATE")
             leads.append(score_lead(lead))
         else:
-            rejected_results.append({"url": lead.url, "title": lead.title, "reasons": lead.rejection_reasons})
+            rejected_results.append({"url": r.get("url", ""), "title": r.get("title", ""), "reason": status, "evidence": evidence})
+
     leads = dedupe_leads(leads)
     leads.sort(key=lambda x: x.score, reverse=True)
-    write_exports(leads, rejected=rejected_results, query_costs=query_costs)
+    write_exports(leads, rejected=rejected_results, query_costs=json.loads((BASE / "runtime/audit/query_costs.json").read_text(encoding="utf-8")) if (BASE / "runtime/audit/query_costs.json").exists() else [])
 
-    used_queries = len(query_costs)
-    if used_queries:
-        with get_db() as con:
-            con.execute("insert or replace into budget_usage(day,queries,cost_eur) values(?,?,?)", (str(date.today()), used_queries, round(used_queries * cfg["cost_per_query_eur"], 3)))
+    qrows = evaluate_quality(evaluated)
+    qperf = aggregate_query_performance(qrows)
+    write_quality_reports(qrows, qperf)
+    source_q = evaluate_source_quality(evaluated)
+    fb = run_feedback_loop()
+    next_q = select_next_queries(qperf, 10)
+    p = BASE / "runtime/query_lab"; p.mkdir(parents=True, exist_ok=True)
+    (p / "next_queries.json").write_text(json.dumps(next_q, ensure_ascii=False, indent=2), encoding="utf-8")
+    log_query_run({"mode": mode, "results": len(raw_results), "rejected": len(rejected_results), "stop_reason": stop_reason})
 
-    summary = {
-        "mode": mode,
-        "queries_used": used_queries,
-        "results_retrieved": len(results),
-        "rejected": len(rejected_results),
-        "qualified": len(leads),
-        "estimated_cost_eur": round(used_queries * cfg["cost_per_query_eur"], 3),
-        "error": search_error,
-        "stopped_by_budget": stopped_by_budget,
-    }
+    summary = {"mode": mode, "queries_used": len(raw_results), "results_retrieved": len(raw_results), "rejected": len(rejected_results), "qualified": len(leads), "estimated_cost_eur": round(len(raw_results) * 0.005, 3), "error": search_error, "stopped_by_budget": bool(stop_reason), "stop_reason": stop_reason, "feedback": fb}
+    write_business_dashboard(leads, summary, qperf=qperf, source_quality=source_q, next_queries=next_q)
     return (leads, summary) if with_summary else leads
 
 
@@ -111,6 +86,8 @@ if __name__ == "__main__":
     p.add_argument("--mode", default="dry-run")
     p.add_argument("--google-cse", action="store_true")
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--dashboard", action="store_true")
+    p.add_argument("--query-lab", action="store_true")
     p.add_argument("--limit", type=int, default=40)
     p.add_argument("--country")
     p.add_argument("--trade")

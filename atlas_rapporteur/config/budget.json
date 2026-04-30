@@ -2,5 +2,6 @@
   "max_queries_per_run": 20,
   "max_queries_per_day": 100,
   "max_daily_cost_eur": 1.0,
+  "cost_per_query_eur": 0.005,
   "stop_when_limit_reached": true
 }
