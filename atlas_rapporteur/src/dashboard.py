@@ -19,3 +19,7 @@ class H(BaseHTTPRequestHandler):
 
 def run_dashboard(port=8080):
     HTTPServer(('0.0.0.0',port),H).serve_forever()
+
+
+if __name__ == "__main__":
+    run_dashboard()
