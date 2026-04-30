@@ -1,0 +1,19 @@
+{
+  "weights": {
+    "valeur_chantier": 25,
+    "urgence": 15,
+    "fraicheur": 15,
+    "clarte": 10,
+    "preuve_source": 10,
+    "domaine_rentable": 10,
+    "localisation": 5,
+    "facilite_artisan": 5,
+    "proba_closing": 5
+  },
+  "tiers": {
+    "TITAN": 85,
+    "GROS": 70,
+    "MOYEN": 55,
+    "PETIT": 40
+  }
+}
