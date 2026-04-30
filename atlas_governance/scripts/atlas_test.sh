@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
-python3 -m unittest discover -s atlas_governance/tests -p "test_*.py"
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
+python -m pytest -q atlas_governance/tests

@@ -1,18 +1,18 @@
-from .authority_index import get_authority
-from .domain_registry import get_domain
-from .common import project_root, suspicious_name
+from .common import repo_root
 
-def resolve(role_or_domain):
-    auth=get_authority(role_or_domain)
-    if auth: return str(project_root()/auth)
-    d=get_domain(role_or_domain)
-    if d: return d.get("allowed_directories",[])[0]
-    return None
-def explain_resolution(role_or_domain): return {"input":role_or_domain,"resolved":resolve(role_or_domain)}
-def is_canonical_path(path): return not suspicious_name(str(path))
-def is_allowed_for_domain(path, domain_id):
-    d=get_domain(domain_id) or {}
-    p=str(path)
-    return any(seg in p for seg in d.get("allowed_directories",[])) and not any(seg in p for seg in d.get("forbidden_directories",[]))
-def reject_ambiguous_path(path): return not suspicious_name(str(path))
-def detect_path_confusion(path): return {"path":str(path),"confused":suspicious_name(str(path))}
+MAP = {
+    "rapporteur_main": "atlas_rapporteur/src",
+    "rapporteur_config": "atlas_rapporteur/config",
+    "rapporteur_tests": "atlas_rapporteur/tests",
+    "business_leads": "atlas/business",
+    "governance_manifest": "atlas_governance/config/atlas_manifest_core.json",
+    "governance_authority_index": "atlas_governance/config/atlas_authority_index.json",
+    "governance_domain_registry": "atlas_governance/config/atlas_domain_registry.json",
+    "atlas_manifest": "atlas_governance/config/atlas_manifest_core.json",
+}
+
+def resolve(key: str):
+    rel = MAP.get(key)
+    if not rel:
+        return None
+    return str(repo_root() / rel)

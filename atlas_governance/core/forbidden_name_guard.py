@@ -1,12 +1,15 @@
-from .common import project_root, FORBIDDEN_TOKENS
+from .common import repo_root, FORBIDDEN_TOKENS, read_json
 
 def detect_forbidden_names():
-    out=[]
-    for p in project_root().rglob('*'):
-        if p.is_file() and '.git/' not in str(p):
-            low=p.name.lower()
-            if any(t in low for t in FORBIDDEN_TOKENS): out.append(str(p.relative_to(project_root())))
+    root = repo_root()
+    auth = read_json(root / "atlas_governance/config/atlas_authority_index.json", {}) or {}
+    out = []
+    for rel in [v for v in auth.values() if isinstance(v, str)]:
+        low = rel.lower()
+        if any(t in low for t in FORBIDDEN_TOKENS):
+            out.append(rel)
     return out
-def validate_no_forbidden_canon(): return {"ok":len(detect_forbidden_names())==0,"forbidden":detect_forbidden_names()}
-def explain_forbidden_name(path):
-    s=str(path).lower(); return [t for t in FORBIDDEN_TOKENS if t in s]
+
+def validate_no_forbidden_canon():
+    f = detect_forbidden_names()
+    return {"ok": len(f) == 0, "forbidden": f}

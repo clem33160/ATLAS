@@ -1,0 +1,28 @@
+{
+  "laws": [
+    "one_domain_one_authority",
+    "no_ambiguous_canon",
+    "preflight_required_before_change",
+    "no_destructive_delete",
+    "no_merge_without_evidence",
+    "no_source_without_provenance",
+    "no_agent_without_scope",
+    "no_canon_with_forbidden_suffix",
+    "runtime_outputs_not_canonical",
+    "lost_mode_blocks_writes"
+  ],
+  "absolute_laws": [
+    "Atlas ne fait jamais confiance à une seule carte.",
+    "Aucun fichier n’est canonique par son nom seul.",
+    "Aucun agent ne modifie sans mission contractuelle.",
+    "Toute modification doit être réversible ou reconstructible.",
+    "Tout chemin important doit passer par le resolver.",
+    "Toute autorité doit avoir une preuve.",
+    "La carte doit être reconstruisible depuis zéro.",
+    "Toute contradiction devient un objet officiel.",
+    "Tout fichier inconnu est suspect jusqu’à classification.",
+    "Les agents parallèles doivent être verrouillés.",
+    "Les tests doivent attaquer la navigation.",
+    "Le système doit pouvoir dire “je suis perdu”."
+  ]
+}
