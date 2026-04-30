@@ -26,6 +26,20 @@ La V0.11 verrouille la base : architecture canonique, qualité vérifiable, non-
 
 Utiliser des fiches artisan avec URL vérifiable (source officielle/annuaire pro) dans `atlas/inbox/`.
 
+## Validation humaine (gate À valider → BUSINESS_READY)
+
+- Fichier d’entrée : `atlas/inbox/human_confirmations.csv`
+- Exemple : `atlas/inbox/human_confirmations.example.csv`
+- Colonnes : `lead_id,confirmed_at,reviewer,decision,evidence_checked,artisan_checked,consent_status,notes`
+- Un lead passe en `BUSINESS_READY` seulement si la ligne confirme :
+  - `decision=CONFIRM_BUSINESS_READY`
+  - `evidence_checked=yes`
+  - `artisan_checked=yes`
+  - `consent_status` ∈ `NON_DEMANDÉ`, `ACCORD_TRANSMISSION`, `À_CLARIFIER`
+  - lead existant, non `DEMO`, avec `source_url` et au moins un artisan non-DEMO vérifiable disponible.
+- Si validé : `reality_status=HUMAN_CONFIRMED`, `qualification_status=BUSINESS_READY`, `pipeline_status=À_APPELER`.
+- Sinon : le lead reste `À valider` avec motif explicite dans le rapport.
+
 ## Vérifier Business Readiness
 
 - `atlas/runtime/business/business_readiness.json`
