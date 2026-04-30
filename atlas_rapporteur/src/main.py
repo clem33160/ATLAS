@@ -31,7 +31,7 @@ def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summ
 
     if mode == "google-cse":
         if not google_cse_available():
-            return ([], {"mode": "google-cse", "error": "Google CSE keys missing", "queries_used": 0, "estimated_cost_eur": 0.0, "stopped_by_budget": False}) if with_summary else []
+            return ([], {"mode": "google-cse", "error": "SKIPPED_NO_API_KEYS", "queries_used": 0, "estimated_cost_eur": 0.0, "stopped_by_budget": False, "results_retrieved": 0, "rejected": 0, "qualified": 0, "business_ready": 0}) if with_summary else []
         usable = []
         for q in queries:
             if can_spend_query():
@@ -46,6 +46,9 @@ def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summ
         except Exception as e:
             search_error = str(e)
             raw_results = []
+    elif mode == "manual":
+        from .search_manual import search_manual
+        raw_results = search_manual()[:query_limit]
     else:
         raw_results = _fixture_results()[:query_limit]
 
@@ -64,7 +67,9 @@ def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summ
 
     leads = dedupe_leads(leads)
     leads.sort(key=lambda x: x.score, reverse=True)
-    write_exports(leads, rejected=rejected_results, query_costs=json.loads((BASE / "runtime/audit/query_costs.json").read_text(encoding="utf-8")) if (BASE / "runtime/audit/query_costs.json").exists() else [])
+    qcosts = json.loads((BASE / "runtime/audit/query_costs.json").read_text(encoding="utf-8")) if (BASE / "runtime/audit/query_costs.json").exists() else []
+    budget_remaining = max(0, int(__import__("os").getenv("SEARCH_DAILY_LIMIT", "100")) - len(qcosts))
+    write_exports(leads, rejected=rejected_results, query_costs=qcosts, summary={"results_retrieved": len(raw_results), "queries_used": len(raw_results), "estimated_cost_eur": round(len(raw_results) * 0.005, 3), "budget_remaining_queries": budget_remaining})
 
     qrows = evaluate_quality(evaluated)
     qperf = aggregate_query_performance(qrows)
@@ -76,7 +81,7 @@ def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summ
     (p / "next_queries.json").write_text(json.dumps(next_q, ensure_ascii=False, indent=2), encoding="utf-8")
     log_query_run({"mode": mode, "results": len(raw_results), "rejected": len(rejected_results), "stop_reason": stop_reason})
 
-    summary = {"mode": mode, "queries_used": len(raw_results), "results_retrieved": len(raw_results), "rejected": len(rejected_results), "qualified": len(leads), "estimated_cost_eur": round(len(raw_results) * 0.005, 3), "error": search_error, "stopped_by_budget": bool(stop_reason), "stop_reason": stop_reason, "feedback": fb}
+    summary = {"mode": mode, "queries_used": len(raw_results), "results_retrieved": len(raw_results), "rejected": len(rejected_results), "qualified": len(leads), "business_ready": len([l for l in leads if l.qualification_status == "BUSINESS_READY"]), "estimated_cost_eur": round(len(raw_results) * 0.005, 3), "error": search_error, "stopped_by_budget": bool(stop_reason), "stop_reason": stop_reason, "feedback": fb}
     write_business_dashboard(leads, summary, qperf=qperf, source_quality=source_q, next_queries=next_q)
     return (leads, summary) if with_summary else leads
 
@@ -88,11 +93,12 @@ if __name__ == "__main__":
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--dashboard", action="store_true")
     p.add_argument("--query-lab", action="store_true")
+    p.add_argument("--manual", action="store_true")
     p.add_argument("--limit", type=int, default=40)
     p.add_argument("--country")
     p.add_argument("--trade")
     p.add_argument("--city")
     a = p.parse_args()
-    mode = "google-cse" if a.google_cse else "dry-run" if a.dry_run else a.mode
+    mode = "manual" if a.manual else "google-cse" if a.google_cse else "dry-run" if a.dry_run else a.mode
     _, summary = run(mode=mode, limit=a.limit, country=a.country, trade=a.trade, city=a.city, with_summary=True)
     print(json.dumps(summary, ensure_ascii=False, indent=2))

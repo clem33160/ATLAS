@@ -1,15 +1,78 @@
 {
-  "countries": ["FR", "BE", "CH", "LU", "CA"],
+  "priority_countries": [
+    "FR",
+    "BE",
+    "CH",
+    "LU",
+    "CA"
+  ],
+  "trades": [
+    "plomberie",
+    "chauffage",
+    "pompe à chaleur",
+    "toiture",
+    "électricité",
+    "serrurerie",
+    "rénovation complète",
+    "isolation",
+    "façade",
+    "menuiserie",
+    "maçonnerie",
+    "terrassement",
+    "climatisation"
+  ],
   "cities_by_country": {
-    "FR": ["Paris", "Lyon", "Marseille", "Lille", "Toulouse", "Nice", "Nantes", "Bordeaux", "Strasbourg", "Montpellier"],
-    "BE": ["Bruxelles", "Liège", "Namur", "Charleroi", "Mons"],
-    "CH": ["Genève", "Lausanne", "Fribourg", "Neuchâtel", "Sion"],
-    "LU": ["Luxembourg"],
-    "CA": ["Montréal", "Québec", "Laval", "Gatineau"]
+    "FR": [
+      "Paris",
+      "Lyon",
+      "Marseille",
+      "Lille",
+      "Toulouse"
+    ],
+    "BE": [
+      "Bruxelles",
+      "Liège",
+      "Namur"
+    ],
+    "CH": [
+      "Genève",
+      "Lausanne"
+    ],
+    "LU": [
+      "Luxembourg"
+    ],
+    "CA": [
+      "Montréal",
+      "Québec"
+    ]
   },
-  "trades": ["plomberie", "chauffage", "pompe à chaleur", "chaudière", "climatisation", "toiture", "charpente", "rénovation", "électricité", "serrurerie", "vitrerie", "isolation", "façade", "peinture", "maçonnerie", "terrassement", "piscine", "salle de bain", "cuisine"],
-  "intent_patterns": ["cherche {trade} {city}", "besoin {trade} {city}", "demande devis {trade} {city}", "urgence {trade} {city}", "remplacement {trade} {city}", "rénovation {trade} {city}", "fuite {trade} {city}", "panne {trade} {city}", "travaux {trade} {city}"],
-  "negative_keywords": ["emploi", "recrutement", "formation", "stage", "alternance", "blog", "guide", "définition", "wikipedia", "annuaire", "artisan propose", "nos services", "entreprise de", "devis gratuit artisan"],
-  "high_value_domains": ["leboncoin.fr", "facebook.com", "linkedin.com", "pagesjaunes.fr"],
-  "emergency_patterns": ["urgence", "fuite", "panne", "dépannage"]
+  "patterns": [
+    "cherche {trade} {city}",
+    "besoin {trade} {city}",
+    "devis {trade} {city}",
+    "urgence {trade} {city}",
+    "fuite {trade} {city}",
+    "panne {trade} {city}",
+    "remplacement {trade} {city}",
+    "travaux {trade} {city}",
+    "appel d'offres {trade} {country}",
+    "marché public travaux {trade} {country}"
+  ],
+  "countries": [
+    "FR",
+    "BE",
+    "CH",
+    "LU",
+    "CA"
+  ],
+  "intent_patterns": [
+    "cherche {trade} {city}",
+    "besoin {trade} {city}",
+    "devis {trade} {city}",
+    "urgence {trade} {city}",
+    "fuite {trade} {city}",
+    "panne {trade} {city}",
+    "remplacement {trade} {city}",
+    "travaux {trade} {city}"
+  ]
 }

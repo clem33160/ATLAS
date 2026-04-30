@@ -1,11 +1,10 @@
 import json
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
 
-from .config import env, load_budget
+from .config import env
 
 
 def google_cse_available():
@@ -18,68 +17,41 @@ def _log_query(log_path, payload):
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-def search_google_cse(queries, limit=20, logger_path=None, retries=2):
+def search_google_cse(queries, limit=20, logger_path=None, retries=1, dry_run=False):
     key, cx = env("GOOGLE_CSE_API_KEY"), env("GOOGLE_CSE_CX")
-    cost_per_query = float(env("SEARCH_COST_PER_QUERY_EUR", "0.005"))
-    budget = load_budget()
-    per_run_cap = min(int(limit), int(budget["max_queries_per_run"]))
-    items = []
-    used = 0
-    start_index = 1
-    log_path = logger_path
-
-    for q in queries:
-        if used >= per_run_cap or len(items) >= limit:
-            break
-        params = {"key": key, "cx": cx, "q": q["query"], "num": 10, "start": start_index}
-        url = f"https://www.googleapis.com/customsearch/v1?{urllib.parse.urlencode(params)}"
-
-        for attempt in range(retries + 1):
-            try:
-                with urllib.request.urlopen(url, timeout=10) as r:
-                    payload = json.loads(r.read().decode("utf-8"))
+    if (not key or not cx) and not dry_run:
+        raise RuntimeError("Google CSE API keys missing")
+    cost = float(env("SEARCH_COST_PER_QUERY_EUR", "0.005"))
+    max_queries = min(len(queries), int(limit), int(env("SEARCH_DAILY_LIMIT", "100")))
+    items, used = [], 0
+    for q in queries[:max_queries]:
+        start = 1
+        while len(items) < limit:
+            if dry_run:
                 break
-            except urllib.error.HTTPError as e:
-                if e.code in (429, 403):
-                    raise RuntimeError("quota exceeded")
-                if attempt >= retries:
-                    raise
-                time.sleep(0.3 * (attempt + 1))
-            except Exception:
-                if attempt >= retries:
-                    raise
-                time.sleep(0.3 * (attempt + 1))
-
-        used += 1
-        if log_path:
-            _log_query(
-                log_path,
-                {
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "query": q["query"],
-                    "country": q.get("country"),
-                    "city": q.get("city"),
-                    "trade": q.get("trade"),
-                    "start": start_index,
-                    "estimated_cost_eur": round(cost_per_query, 6),
-                    "url": url,
-                },
-            )
-
-        for it in payload.get("items", []):
-            items.append(
-                {
-                    "title": it.get("title", ""),
-                    "url": it.get("link", ""),
-                    "snippet": it.get("snippet", ""),
-                    "city": q.get("city", "INCERTAIN"),
-                    "country": q.get("country", "INCERTAIN"),
-                    "trade": q.get("trade", "INCERTAIN"),
-                    "freshness_days": 3,
-                }
-            )
-            if len(items) >= limit:
+            params = {"key": key, "cx": cx, "q": q["query"], "num": 10, "start": start}
+            url = f"https://www.googleapis.com/customsearch/v1?{urllib.parse.urlencode(params)}"
+            payload=None
+            for attempt in range(retries+1):
+                try:
+                    with urllib.request.urlopen(url, timeout=10) as r:
+                        payload = json.loads(r.read().decode("utf-8"))
+                    break
+                except urllib.error.HTTPError as e:
+                    if e.code in (429, 403):
+                        raise RuntimeError("quota exceeded")
+                    if attempt>=retries: raise
+                except Exception:
+                    if attempt>=retries: raise
+            if logger_path:
+                _log_query(logger_path, {"timestamp": datetime.utcnow().isoformat(), "query": q["query"], "start": start, "estimated_cost_eur": cost, "country": q.get("country"), "city": q.get("city")})
+            for it in payload.get("items", []):
+                items.append({"title": it.get("title", ""), "url": it.get("link", ""), "snippet": it.get("snippet", ""), "country": q.get("country", "INCONNU"), "city": q.get("city", "INCONNU"), "trade": q.get("trade", "INCONNU")})
+                if len(items) >= limit:
+                    break
+            used += 1
+            next_page = payload.get("queries", {}).get("nextPage", [])
+            if not next_page:
                 break
-        start_index = 1 if start_index >= 91 else start_index + 10
-
+            start = int(next_page[0].get("startIndex", 0))
     return items[:limit], used

@@ -1,27 +1,30 @@
-from itertools import product
+import json
+from pathlib import Path
 
-TRADES = ["plombier", "chauffagiste", "serrurier", "toiture", "rénovation"]
-CITIES = {
-    "france": ["Paris", "Lyon", "Marseille", "Lille", "Toulouse"],
-}
-INTENTS = [
-    "cherche {trade} fuite {city}",
-    "demande devis rénovation toiture {city}",
-    "besoin chauffagiste remplacement chaudière {city}",
-    "travaux rénovation appartement {city} devis",
-    "urgence serrure bloquée {city}",
-]
+BASE = Path(__file__).resolve().parents[1]
+
+
+def load_strategy():
+    return json.loads((BASE / "config/query_strategy.json").read_text(encoding="utf-8"))
 
 
 def build_queries(limit=80, country=None, trade=None, city=None):
-    countries = [country] if country else list(CITIES.keys())
-    trades = [trade] if trade else TRADES
-    queries = []
+    s = load_strategy()
+    trades = [trade] if trade else s["trades"]
+    countries = [country] if country else s["priority_countries"]
+    patterns = s["patterns"]
+    out = []
     for c in countries:
-        for t, ci, pat in product(trades, CITIES.get(c, []), INTENTS):
-            if city and ci.lower() != city.lower():
-                continue
-            queries.append({"query": pat.format(trade=t, city=ci), "country": c, "trade": t, "city": ci})
-            if len(queries) >= limit:
-                return queries
-    return queries
+        cities = s["cities_by_country"].get(c, [])
+        for t in trades:
+            for pat in patterns:
+                if "{city}" in pat:
+                    for ci in cities:
+                        if city and ci.lower() != city.lower():
+                            continue
+                        out.append({"query": pat.format(trade=t, city=ci, country=c), "country": c, "city": ci, "trade": t})
+                else:
+                    out.append({"query": pat.format(trade=t, country=c), "country": c, "city": city or "INCONNU", "trade": t})
+                if len(out) >= limit:
+                    return out
+    return out
