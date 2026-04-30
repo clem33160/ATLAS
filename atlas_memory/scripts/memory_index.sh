@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT=$(git rev-parse --show-toplevel)
-export PYTHONPATH="$ROOT"
+export PYTHONPATH="$(git rev-parse --show-toplevel):${PYTHONPATH:-}"
 python - <<'PY'
-from atlas_memory.src.global_index import generate_global_index
-print(generate_global_index())
+from atlas_memory.src.check_pipeline import run_memory_full_check
+print(run_memory_full_check(clean_noise=True, bootstrap=True, regenerate_index=True))
 PY
