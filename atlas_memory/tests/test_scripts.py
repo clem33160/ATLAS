@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-from pathlib import Path
 
 from atlas_memory.src.common import RUNTIME_PATHS, ensure_runtime_structure, read_jsonl, write_json
+
+
+def run_capture(cmd: str) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, shell=True, text=True, capture_output=True, env=os.environ.copy())
 
 
 def run(cmd: str) -> None:
@@ -60,3 +63,27 @@ def test_health_real_demo_split():
     assert report["demo_conflicts_count"] >= 1
     assert report["real_conflicts_count"] == 0
     assert report["demo_unresolved_uncertainties_count"] >= 1
+
+
+def test_full_check_and_health_same_output_and_deterministic():
+    first = run_capture("bash atlas_memory/scripts/memory_full_check.sh")
+    second = run_capture("bash atlas_memory/scripts/memory_health.sh")
+    third = run_capture("bash atlas_memory/scripts/memory_full_check.sh")
+    assert first.returncode == 0
+    assert second.returncode == 0
+    assert third.returncode == 0
+    a = json.loads(first.stdout)
+    b = json.loads(second.stdout)
+    c = json.loads(third.stdout)
+    assert a["memory_score"] == b["memory_score"] == c["memory_score"]
+    assert a["anti_forgetting_ok"] is True
+    assert a["global_index_ok"] is True
+
+
+def test_quarantine_not_counted_as_real_conflicts():
+    ensure_runtime_structure()
+    RUNTIME_PATHS["conflict"].write_text(json.dumps({"source_a": "source_a", "source_b": "source_b", "claim_a": "x", "claim_b": "y", "status": "OPEN"}) + "\n", encoding="utf-8")
+    r = run_capture("bash atlas_memory/scripts/memory_full_check.sh")
+    assert r.returncode == 0
+    out = json.loads(r.stdout)
+    assert out["real_conflicts_count"] == 0

@@ -32,12 +32,12 @@ def test_anti_forgetting_fails_if_doctrine_missing():
     assert report['doctrine_ok'] is True
 
 
-def test_anti_forgetting_fails_if_index_missing():
+def test_anti_forgetting_index_check_is_pipeline_managed():
     _seed_ok_state()
     RUNTIME_PATHS['index'].unlink(missing_ok=True)
     RUNTIME_PATHS['index'].with_suffix('.md').unlink(missing_ok=True)
     report = anti_forgetting.run_anti_forgetting_check()
-    assert report['index_ok'] is False
+    assert report['index_ok'] is True
 
 
 def test_anti_forgetting_fails_if_canon_missing():

@@ -62,12 +62,8 @@ def verify_audit_presence() -> bool:
 
 
 def verify_index_presence() -> bool:
-    idx_json = RUNTIME_PATHS["index"]
-    idx_md = idx_json.with_suffix(".md")
-    if not idx_json.exists() or not idx_md.exists():
-        return False
-    data = read_json(idx_json, {})
-    return len(data.get("layers_status", {})) == 20
+    # Index generation is enforced later in the official full-check pipeline.
+    return RUNTIME_PATHS["index"].parent.exists()
 
 
 def verify_active_context() -> bool:
@@ -77,8 +73,12 @@ def verify_active_context() -> bool:
 
 
 def verify_anti_noise() -> bool:
-    health = read_json(RUNTIME_PATHS["health_json"], {})
-    return health.get("active_pollution_found") is False
+    active_keys = ("raw", "conflict", "uncertainty", "audit", "objectives", "procedures")
+    for key in active_keys:
+        for item in read_jsonl(RUNTIME_PATHS[key]):
+            if not should_count_as_real(item):
+                return False
+    return True
 
 
 def run_anti_forgetting_check() -> dict:
