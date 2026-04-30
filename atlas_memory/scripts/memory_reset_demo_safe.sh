@@ -5,6 +5,7 @@ python - <<'PY'
 import json
 from pathlib import Path
 from atlas_memory.src.common import RUNTIME_PATHS, read_json, read_jsonl, write_json
+from atlas_memory.src.noise_guard import should_count_as_real
 
 
 def contains_marker(value):
@@ -13,16 +14,7 @@ def contains_marker(value):
 
 
 def is_demo_like(item):
-    if contains_marker(item.get("source", "")) or contains_marker(item.get("domain", "")):
-        return True
-    if "client cherche plombier lyon fuite urgente" in str(item.get("content", "")).lower():
-        return True
-    for tag in item.get("tags", []) or []:
-        if contains_marker(tag):
-            return True
-    if contains_marker(item.get("metadata", {})):
-        return True
-    return contains_marker(item)
+    return not should_count_as_real(item)
 
 
 raw = read_jsonl(RUNTIME_PATHS["raw"])
