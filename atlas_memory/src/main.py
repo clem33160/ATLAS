@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from . import active_context, audit_ledger, canon_store, health, objective_store, procedure_store, raw_store, self_memory, semantic_store
+from . import active_context, anti_forgetting, audit_ledger, canon_store, health, objective_store, procedure_store, raw_store, self_memory, semantic_store
 from .common import RUNTIME_PATHS, ensure_runtime_structure, new_id, now_iso, read_json, read_jsonl
 
 
@@ -47,6 +47,9 @@ def cmd_active(args):
 def cmd_health(_: argparse.Namespace):
     print(json.dumps(health.compute_health(), indent=2, ensure_ascii=False))
 
+def cmd_anti_forgetting(_: argparse.Namespace):
+    print(json.dumps(anti_forgetting.run_anti_forgetting_check(), indent=2, ensure_ascii=False))
+
 
 def cmd_demo(_: argparse.Namespace):
     cmd_init(argparse.Namespace())
@@ -88,6 +91,7 @@ def main() -> None:
     c=sub.add_parser("promote-canon"); c.add_argument("--domain", required=True); c.add_argument("--event-id", required=True); c.add_argument("--reason", required=True); c.add_argument("--human-validated", action="store_true"); c.set_defaults(func=cmd_promote)
     a=sub.add_parser("active-context"); a.add_argument("--task", required=True); a.add_argument("--domain"); a.set_defaults(func=cmd_active)
     sub.add_parser("health").set_defaults(func=cmd_health)
+    sub.add_parser("anti-forgetting").set_defaults(func=cmd_anti_forgetting)
     sub.add_parser("demo").set_defaults(func=cmd_demo)
     sub.add_parser("ingest-rapporteur").set_defaults(func=cmd_ingest_rapporteur)
     args = parser.parse_args(); ensure_runtime_structure(); args.func(args)
