@@ -16,13 +16,14 @@ from .reports import write_exports
 from .scoring import score_lead
 from .search_google_cse import google_cse_available, search_google_cse
 from .source_quality import evaluate_source_quality
+from .provider_router import discover
 
 
 def _fixture_results():
     return json.loads((BASE / "data/fixtures/sample_search_results.json").read_text(encoding="utf-8"))
 
 
-def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summary=False):
+def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summary=False, provider="all"):
     query_limit = min(limit, 20)
     queries = build_query_candidates(limit=query_limit, country=country, trade=trade, city=city)
     search_error = None
@@ -49,6 +50,9 @@ def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summ
     elif mode == "manual":
         from .search_manual import search_manual
         raw_results = search_manual()[:query_limit]
+    elif mode == "discover":
+        q = queries[0]["query"] if queries else "appel d'offres"
+        raw_results, _ = discover(q, selected=provider, limit=query_limit)
     else:
         raw_results = _fixture_results()[:query_limit]
 
@@ -95,10 +99,12 @@ if __name__ == "__main__":
     p.add_argument("--query-lab", action="store_true")
     p.add_argument("--manual", action="store_true")
     p.add_argument("--limit", type=int, default=40)
+    p.add_argument("--discover", action="store_true")
+    p.add_argument("--provider", default="all")
     p.add_argument("--country")
     p.add_argument("--trade")
     p.add_argument("--city")
     a = p.parse_args()
-    mode = "manual" if a.manual else "google-cse" if a.google_cse else "dry-run" if a.dry_run else a.mode
-    _, summary = run(mode=mode, limit=a.limit, country=a.country, trade=a.trade, city=a.city, with_summary=True)
+    mode = "discover" if a.discover else "manual" if a.manual else "google-cse" if a.google_cse else "dry-run" if a.dry_run else a.mode
+    _, summary = run(mode=mode, limit=a.limit, country=a.country, trade=a.trade, city=a.city, with_summary=True, provider=a.provider)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
