@@ -87,6 +87,10 @@ def run(mode="dry-run", limit=40, country=None, trade=None, city=None, with_summ
 
     summary = {"mode": mode, "queries_used": len(raw_results), "results_retrieved": len(raw_results), "rejected": len(rejected_results), "qualified": len(leads), "business_ready": len([l for l in leads if l.qualification_status == "BUSINESS_READY"]), "estimated_cost_eur": round(len(raw_results) * 0.005, 3), "error": search_error, "stopped_by_budget": bool(stop_reason), "stop_reason": stop_reason, "feedback": fb}
     write_business_dashboard(leads, summary, qperf=qperf, source_quality=source_q, next_queries=next_q)
+
+    from atlas_memory.src.integration import ingest_rapporteur_run
+    ingest_status = ingest_rapporteur_run()
+    summary['memory_ingest'] = ingest_status
     return (leads, summary) if with_summary else leads
 
 

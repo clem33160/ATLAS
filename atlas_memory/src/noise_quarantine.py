@@ -22,6 +22,8 @@ def quarantine_noise() -> dict[str, Any]:
     noise_dir = RUNTIME_PATHS["raw"].parents[1] / "noise"
     noise_dir.mkdir(parents=True, exist_ok=True)
     mapping = {
+        "raw": "quarantined_raw.jsonl",
+        "semantic": "quarantined_semantic.jsonl",
         "conflict": "quarantined_conflicts.jsonl",
         "uncertainty": "quarantined_uncertainties.jsonl",
         "audit": "quarantined_audit.jsonl",

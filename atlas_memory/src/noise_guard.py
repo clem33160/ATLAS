@@ -50,6 +50,9 @@ def explain_noise(item: dict[str, Any]) -> list[str]:
         reasons.append("too_many_inconnu")
     if "client cherche plombier lyon fuite urgente" in text and is_synthetic_source(item):
         reasons.append("demo_lyon_plombier")
+
+    if item.get("domain") in {"rapporteur_affaires", "rapporteur_affaires_demo"} and item.get("status") == "OPEN" and float(item.get("confidence", 1)) <= 0.4 and not item.get("evidence_id"):
+        reasons.append("low_provenance_uncertainty")
     return sorted(set(reasons))
 
 
