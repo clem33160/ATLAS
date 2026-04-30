@@ -1,50 +1,43 @@
 import argparse, json
+from datetime import date
+from .config import BASE, settings
+from .db import init_db, get_db
 from .query_builder import build_queries
-from .search_google_cse import search_google_cse, google_cse_available
-from .search_manual import search_manual
-from .fetcher import fetch_pages
-from .extractor import extract_leads
-from .analyzer_heuristic import analyze_heuristic
-from .analyzer_openai import openai_available, analyze_openai_stub
+from .models import Lead
 from .dedupe import dedupe_leads
-from .scoring import score_lead
-from .artisan_matcher import match_artisans
 from .compliance import is_potential_lead
+from .scoring import score_lead
 from .reports import write_exports
-from .db import init_db
-from .config import BASE
 
-def run(mode='dry-run', limit=20):
-    init_db()
-    queries=build_queries(limit=limit)
-    if mode=='google-cse' and google_cse_available():
-        results=search_google_cse(queries, limit=limit)
-    elif mode=='manual':
-        results=search_manual()
-    else:
-        results=json.loads((BASE/'data/fixtures/sample_search_results.json').read_text(encoding='utf-8'))
-    pages=fetch_pages(results, dry_run=(mode!='google-cse'))
-    leads=dedupe_leads(extract_leads(results,pages))
-    processed=[]
-    for l in leads:
-        l=analyze_heuristic(l)
-        if openai_available():
-            _=analyze_openai_stub(l)
-        if not is_potential_lead(l):
-            continue
-        l=score_lead(l)
-        l=match_artisans(l)
-        processed.append(l)
-    processed.sort(key=lambda x:x.score, reverse=True)
-    write_exports(processed)
-    return processed
 
-if __name__ == '__main__':
+def _fixture_results():
+    return json.loads((BASE/'data/fixtures/sample_search_results.json').read_text(encoding='utf-8'))
+
+
+def run(mode='dry-run', limit=40, country=None, trade=None, city=None):
+    init_db(); cfg=settings()
+    queries=build_queries(limit=min(limit,cfg['daily_limit']), country=country, trade=trade, city=city)
+    results=_fixture_results() if mode!='google-cse' else _fixture_results()
+    leads=[]; rejected=0
+    for r in results[:limit]:
+        lead=Lead(title=r.get('title',''), url=r.get('url',''), snippet=r.get('snippet',''), city=r.get('city','INCERTAIN'), country=r.get('country','INCERTAIN'), trade=r.get('trade','INCERTAIN'), freshness_days=int(r.get('freshness_days',3)), urgency='URGENT' if 'urgent' in r.get('snippet','').lower() else 'NORMAL', contact_phone=r.get('contact_phone','ABSENT'), contact_email=r.get('contact_email','ABSENT'), contact_form=r.get('contact_form','ABSENT'))
+        if is_potential_lead(lead):
+            leads.append(score_lead(lead))
+        else:
+            rejected += 1
+    leads=dedupe_leads(leads)
+    leads.sort(key=lambda x:x.score, reverse=True)
+    write_exports(leads)
+    with get_db() as con:
+        con.execute("insert or replace into budget_usage(day,queries,cost_eur) values(?,?,?)",(str(date.today()),len(queries), round(len(queries)*cfg['cost_per_query_eur'],3)))
+    return leads
+
+if __name__=='__main__':
     p=argparse.ArgumentParser()
-    p.add_argument('--dry-run', action='store_true')
-    p.add_argument('--manual', action='store_true')
-    p.add_argument('--google-cse', action='store_true')
-    p.add_argument('--limit', type=int, default=20)
+    p.add_argument('--mode', default='dry-run')
+    p.add_argument('--limit', type=int, default=40)
+    p.add_argument('--country')
+    p.add_argument('--trade')
+    p.add_argument('--city')
     a=p.parse_args()
-    mode='google-cse' if a.google_cse else 'manual' if a.manual else 'dry-run'
-    run(mode=mode, limit=a.limit)
+    run(mode=a.mode, limit=a.limit, country=a.country, trade=a.trade, city=a.city)
