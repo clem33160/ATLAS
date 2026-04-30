@@ -1,0 +1,1 @@
+{"raw_event_required":["event_id","created_at","kind","domain","content","source","source_url","confidence","evidence_ids","linked_objective_ids","validated_by_human","risk_level","useful_for_future","status","tags","metadata"]}
