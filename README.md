@@ -64,3 +64,9 @@ sed -n '1,360p' atlas/runtime/closer/daily_call_sheet.md
 sed -n '1,260p' atlas/runtime/business/business_readiness.md
 sed -n '1,240p' atlas/runtime/audit/quality_audit.md
 ```
+
+## Atlas Navigation Core
+- `bash atlas_governance/scripts/atlas_whereami.sh`
+- `bash atlas_governance/scripts/atlas_preflight.sh`
+- `bash atlas_governance/scripts/atlas_health.sh`
+- `bash atlas_governance/scripts/atlas_merge_oracle.sh`

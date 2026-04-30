@@ -4,3 +4,7 @@ atlas/runtime/
 # Python cache
 __pycache__/
 *.pyc
+
+# Atlas governance runtime
+atlas_governance/runtime/*
+!atlas_governance/runtime/**/.gitkeep

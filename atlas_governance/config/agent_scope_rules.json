@@ -1,0 +1,12 @@
+{
+  "scraping": [
+    "search",
+    "extraction"
+  ],
+  "scoring": [
+    "scoring"
+  ],
+  "report": [
+    "reports"
+  ]
+}

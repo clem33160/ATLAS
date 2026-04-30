@@ -1,0 +1,287 @@
+{
+  "governance": {
+    "domain_id": "governance",
+    "description": "Domain governance",
+    "canonical_role": "governance",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "navigation": {
+    "domain_id": "navigation",
+    "description": "Domain navigation",
+    "canonical_role": "navigation",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "business_leads": {
+    "domain_id": "business_leads",
+    "description": "Domain business_leads",
+    "canonical_role": "business_leads",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "artisans": {
+    "domain_id": "artisans",
+    "description": "Domain artisans",
+    "canonical_role": "artisans",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "legal_collection": {
+    "domain_id": "legal_collection",
+    "description": "Domain legal_collection",
+    "canonical_role": "legal_collection",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "scoring": {
+    "domain_id": "scoring",
+    "description": "Domain scoring",
+    "canonical_role": "scoring",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "compliance": {
+    "domain_id": "compliance",
+    "description": "Domain compliance",
+    "canonical_role": "compliance",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "crm": {
+    "domain_id": "crm",
+    "description": "Domain crm",
+    "canonical_role": "crm",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "reports": {
+    "domain_id": "reports",
+    "description": "Domain reports",
+    "canonical_role": "reports",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "search": {
+    "domain_id": "search",
+    "description": "Domain search",
+    "canonical_role": "search",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "extraction": {
+    "domain_id": "extraction",
+    "description": "Domain extraction",
+    "canonical_role": "extraction",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "simulation": {
+    "domain_id": "simulation",
+    "description": "Domain simulation",
+    "canonical_role": "simulation",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "energy": {
+    "domain_id": "energy",
+    "description": "Domain energy",
+    "canonical_role": "energy",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "system_memory": {
+    "domain_id": "system_memory",
+    "description": "Domain system_memory",
+    "canonical_role": "system_memory",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  },
+  "tests": {
+    "domain_id": "tests",
+    "description": "Domain tests",
+    "canonical_role": "tests",
+    "allowed_directories": [
+      "atlas",
+      "atlas_rapporteur",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_governance"
+  }
+}
