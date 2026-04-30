@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "tests": "TEST",
+    "scripts": "SCRIPT",
+    "runtime": "RUNTIME",
+    "config": "CONFIG"
+  }
+}

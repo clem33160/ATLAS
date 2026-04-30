@@ -1,0 +1,15 @@
+{
+  "forbidden_tokens": [
+    "final",
+    "new",
+    "patch",
+    "copy",
+    "v2",
+    "v3",
+    "old",
+    "backup",
+    "tmp",
+    "brouillon",
+    "test_final"
+  ]
+}

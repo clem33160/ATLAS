@@ -1,0 +1,11 @@
+{
+  "atlas_manifest": "atlas_governance/config/atlas_manifest_core.json",
+  "authority_index": "atlas_governance/config/atlas_authority_index.json",
+  "domain_registry": "atlas_governance/config/atlas_domain_registry.json",
+  "navigation_rules": "atlas_governance/config/navigation_rules.json",
+  "rapporteur_main": "atlas_rapporteur/src/main.py",
+  "rapporteur_config": "atlas_rapporteur/config/settings.example.json",
+  "rapporteur_sources": "atlas_rapporteur/config/source_policy.json",
+  "rapporteur_scoring": "atlas_rapporteur/config/scoring.json",
+  "rapporteur_tests": "atlas_rapporteur/tests/"
+}

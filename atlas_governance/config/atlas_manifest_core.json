@@ -1,0 +1,50 @@
+{
+  "system_name": "ATLAS",
+  "governance_name": "Atlas Navigation Core",
+  "logical_version": "1.0",
+  "root_markers": [
+    "README.md",
+    ".git"
+  ],
+  "official_directories": [
+    "atlas",
+    "atlas_rapporteur",
+    "atlas_governance"
+  ],
+  "canonical_directories": [
+    "atlas",
+    "atlas_rapporteur",
+    "atlas_governance/config"
+  ],
+  "runtime_directories": [
+    "atlas/runtime",
+    "atlas_rapporteur/runtime",
+    "atlas_governance/runtime"
+  ],
+  "forbidden_canonical_suffixes": [
+    "v2",
+    "v3",
+    "final",
+    "patch",
+    "fix",
+    "new",
+    "old",
+    "backup",
+    "tmp"
+  ],
+  "naming_laws": [
+    "No forbidden suffixes for canon files"
+  ],
+  "active_modules": [
+    "manifest",
+    "authority_index",
+    "domain_registry",
+    "path_resolver",
+    "system_map"
+  ],
+  "protected_files": [
+    "atlas_governance/config/atlas_manifest_core.json",
+    "atlas_governance/config/atlas_authority_index.json"
+  ],
+  "generated_files_policy": "runtime outputs are non-canonical and ignored by git except .gitkeep"
+}

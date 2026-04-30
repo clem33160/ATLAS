@@ -1,0 +1,4 @@
+{
+  "single_authority_per_domain": true,
+  "reject_suspicious_canonical_names": true
+}
