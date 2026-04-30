@@ -7,3 +7,7 @@ from atlas_governance.core.invariant_engine import run_invariants
 from atlas_governance.recovery.boot_contract import run as boot
 print({"invariants": run_invariants()["ok"], "boot": boot()["ok"]})
 PY
+python - <<'PY'
+from atlas_memory.src.integration import ingest_governance_health
+ingest_governance_health()
+PY

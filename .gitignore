@@ -12,3 +12,6 @@ atlas_governance/runtime/*
 # Atlas memory runtime
 atlas_memory/runtime/*
 !atlas_memory/runtime/.gitkeep
+
+!atlas/runtime/.gitkeep
+!atlas_memory/runtime/reports/atlas_10_10_upgrade_report.md
