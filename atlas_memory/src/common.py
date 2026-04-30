@@ -8,28 +8,44 @@ from pathlib import Path
 from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-RUNTIME_DIR = BASE_DIR / "runtime"
+DEFAULT_RUNTIME_DIR = BASE_DIR / "runtime"
 
-RUNTIME_PATHS = {
-    "raw": RUNTIME_DIR / "raw/events.jsonl",
-    "semantic": RUNTIME_DIR / "semantic/concepts.jsonl",
-    "canon": RUNTIME_DIR / "canon/domains",
-    "evidence": RUNTIME_DIR / "evidence/proofs.jsonl",
-    "conflict": RUNTIME_DIR / "conflict/conflicts.jsonl",
-    "temporal": RUNTIME_DIR / "temporal/timeline.jsonl",
-    "procedures": RUNTIME_DIR / "procedures/procedures.jsonl",
-    "self": RUNTIME_DIR / "self/self_state.json",
-    "objectives": RUNTIME_DIR / "objectives/objectives.jsonl",
-    "uncertainty": RUNTIME_DIR / "uncertainty/uncertainties.jsonl",
-    "simulation": RUNTIME_DIR / "simulation/scenarios.jsonl",
-    "audit": RUNTIME_DIR / "audit/audit_ledger.jsonl",
-    "active": RUNTIME_DIR / "active/active_context.json",
-    "index": RUNTIME_DIR / "index/global_memory_map.json",
-    "health_json": RUNTIME_DIR / "reports/memory_health.json",
-    "health_md": RUNTIME_DIR / "reports/memory_health.md",
-    "causal": RUNTIME_DIR / "semantic/causal_links.jsonl",
-    "social": RUNTIME_DIR / "self/user_preferences.json",
-}
+
+def get_runtime_dir() -> Path:
+    override = os.environ.get("ATLAS_MEMORY_RUNTIME_DIR", "").strip()
+    return Path(override).resolve() if override else DEFAULT_RUNTIME_DIR
+
+
+def _build_runtime_paths(runtime_dir: Path) -> dict[str, Path]:
+    return {
+        "raw": runtime_dir / "raw/events.jsonl",
+        "semantic": runtime_dir / "semantic/concepts.jsonl",
+        "canon": runtime_dir / "canon/domains",
+        "evidence": runtime_dir / "evidence/proofs.jsonl",
+        "conflict": runtime_dir / "conflict/conflicts.jsonl",
+        "temporal": runtime_dir / "temporal/timeline.jsonl",
+        "procedures": runtime_dir / "procedures/procedures.jsonl",
+        "self": runtime_dir / "self/self_state.json",
+        "objectives": runtime_dir / "objectives/objectives.jsonl",
+        "uncertainty": runtime_dir / "uncertainty/uncertainties.jsonl",
+        "simulation": runtime_dir / "simulation/scenarios.jsonl",
+        "audit": runtime_dir / "audit/audit_ledger.jsonl",
+        "active": runtime_dir / "active/active_context.json",
+        "index": runtime_dir / "index/global_memory_map.json",
+        "health_json": runtime_dir / "reports/memory_health.json",
+        "health_md": runtime_dir / "reports/memory_health.md",
+        "causal": runtime_dir / "semantic/causal_links.jsonl",
+        "social": runtime_dir / "self/user_preferences.json",
+    }
+
+
+RUNTIME_PATHS: dict[str, Path] = _build_runtime_paths(get_runtime_dir())
+
+
+def refresh_runtime_paths() -> None:
+    RUNTIME_PATHS.clear()
+    RUNTIME_PATHS.update(_build_runtime_paths(get_runtime_dir()))
+
 
 SENSITIVE_KEYS = {"ssn", "password", "token", "secret", "credit_card", "iban", "passport"}
 
@@ -43,6 +59,7 @@ def new_id(prefix: str) -> str:
 
 
 def ensure_runtime_structure() -> None:
+    refresh_runtime_paths()
     for path in RUNTIME_PATHS.values():
         path.parent.mkdir(parents=True, exist_ok=True)
     for key, path in RUNTIME_PATHS.items():
