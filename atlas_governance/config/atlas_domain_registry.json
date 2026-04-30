@@ -283,5 +283,23 @@
       "path"
     ],
     "owner_module": "atlas_governance"
+  },
+  "atlas_memory": {
+    "domain_id": "atlas_memory",
+    "description": "Domain atlas_memory",
+    "canonical_role": "memory",
+    "allowed_directories": [
+      "atlas_memory",
+      "atlas_governance"
+    ],
+    "forbidden_directories": [
+      "archive",
+      "backup",
+      "tmp"
+    ],
+    "required_evidence": [
+      "path"
+    ],
+    "owner_module": "atlas_memory"
   }
 }
