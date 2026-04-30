@@ -1,11 +1,2 @@
-__pycache__/
-*.pyc
-.venv/
-runtime/cache/*
-runtime/logs/*
-runtime/db/*.db
-runtime/exports/*
-runtime/reports/*
-runtime/closer/*
-runtime/audit/*
-!.gitkeep
+runtime/**
+!runtime/.gitkeep
