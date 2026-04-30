@@ -8,3 +8,7 @@ __pycache__/
 # Atlas governance runtime
 atlas_governance/runtime/*
 !atlas_governance/runtime/**/.gitkeep
+
+# Atlas memory runtime
+atlas_memory/runtime/*
+!atlas_memory/runtime/.gitkeep
