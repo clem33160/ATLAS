@@ -1,49 +1,43 @@
-# Atlas Rapporteur d’Affaires — Clean V1
+# Atlas Rapporteur d’Affaires — V0 Production
 
-Base canonique pour détecter des opportunités **publiques** de travaux dans la francophonie, les qualifier, scorer, matcher des artisans vérifiables, et produire des fiches pour un closer humain.
+Backend Python déployable pour détecter/qualifier des leads publics BTP via API de recherche compatible Google CSE.
 
-## Principes de conformité
-- Sources publiques uniquement, sans login/captcha bypass.
-- Pas de scraping agressif, spam, ni contact automatique.
-- Aucune invention de lead ou d’artisan.
-- Si une donnée manque: `INCONNU`.
-- Validation humaine obligatoire avant état business critique.
+## Variables d'environnement
+- `SEARCH_PROVIDER` (`google_cse` ou autre provider)
+- `GOOGLE_SEARCH_API_KEY`
+- `GOOGLE_SEARCH_ENGINE_ID`
+- `SEARCH_MONTHLY_BUDGET_EUR` (ex: 150)
+- `SEARCH_DAILY_LIMIT` (ex: 80)
+- `SEARCH_COST_PER_QUERY_EUR` (ex: 0.005)
+- `SEARCH_MAX_AGE_DAYS` (ex: 15)
 
-## Installation rapide
+## Installation
 ```bash
-python3 -m venv .venv
+python -m venv .venv
 . .venv/bin/activate
-pip install -r requirements.txt  # optionnel, le projet tourne sans dépendances externes
+pip install pytest
 ```
-
-## Variables d’environnement
-- `GOOGLE_CSE_API_KEY`
-- `GOOGLE_CSE_CX`
-- `OPENAI_API_KEY`
-- `ATLAS_ANALYSIS_MODEL` (défaut: `gpt-5.4`)
-- `ATLAS_DRY_RUN` (défaut: `1`)
 
 ## Commandes
 ```bash
-bash atlas_rapporteur/scripts/init_db.sh
-bash atlas_rapporteur/scripts/test.sh
-bash atlas_rapporteur/scripts/run.sh --dry-run
-bash atlas_rapporteur/scripts/run.sh --manual
-bash atlas_rapporteur/scripts/run.sh --google-cse --limit 20
-bash atlas_rapporteur/scripts/audit.sh
+PYTHONPATH=. python -m atlas_rapporteur.src.main --mode dry-run --limit 50
+PYTHONPATH=. python -m atlas_rapporteur.src.main --mode dry-run --country france
+PYTHONPATH=. python -m atlas_rapporteur.src.main --mode dry-run --trade plomberie
+PYTHONPATH=. python -m atlas_rapporteur.src.main --mode dry-run --city Lyon
+PYTHONPATH=. python -m atlas_rapporteur.src.dashboard
+PYTHONPATH=. pytest -q atlas_rapporteur/tests
 ```
 
-## Modes d’exécution
-- `--dry-run`: fixtures offline.
-- `--manual`: lit `inbox/manual_urls.csv`.
-- `--google-cse`: actif seulement si clés présentes, sinon fallback dry-run.
-
-## Sorties
+## Exports
 - `runtime/exports/leads_ranked.json`
 - `runtime/exports/leads_ranked.csv`
 - `runtime/reports/daily_report.md`
-- `runtime/closer/closer_call_sheet.md`
-- `runtime/audit/audit_report.md`
+- `runtime/db/atlas.db`
 
-## Règle anti-faux lead
-Seuls `CLIENT_REQUEST` et `PUBLIC_MARKET` sont conservés comme opportunités potentielles.
+## Déploiement
+Compatible Docker/VPS/Render/Railway/Fly.io (service worker quotidien + service web dashboard).
+
+## Limites V0
+- Connecteur Google réel à brancher selon clés (mode dry-run inclus).
+- Extraction de contacts basée sur signaux disponibles dans les résultats.
+- Scheduler externe recommandé (cron/GitHub Actions).

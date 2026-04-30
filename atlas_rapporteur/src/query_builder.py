@@ -1,13 +1,19 @@
-from .config import load_json
+from itertools import product
 
-def build_queries(limit=50):
-    qp = load_json('config/query_packs.json')
-    out = []
-    for region, cities in qp['regions'].items():
-        for city in cities:
-            for trade in qp['trades'][:5]:
-                for p in qp['patterns'][:3]:
-                    out.append(p.format(trade=trade, city=city, country=region))
-                    if len(out) >= limit:
-                        return out
-    return out
+TRADES=["plomberie","chauffage","pompe à chaleur","chaudière","climatisation","électricité","serrurerie","vitrerie","toiture","rénovation complète","isolation","maçonnerie","terrassement","piscine","salle de bain","cuisine","dégâts des eaux"]
+CITIES={"france":["Paris","Lyon","Marseille"],"belgique":["Bruxelles","Namur","Liège"],"suisse":["Genève","Lausanne"],"luxembourg":["Luxembourg"],"quebec":["Montréal","Québec"]}
+INTENTS=["cherche {trade} urgence {city}","besoin devis {trade} {city}","recherche artisan {trade} {city}","{trade} panne urgent {city}","chantier {trade} à faire {city}"]
+
+
+def build_queries(limit=80,country=None,trade=None,city=None):
+    countries=[country] if country else list(CITIES.keys())
+    trades=[trade] if trade else TRADES
+    queries=[]
+    for c in countries:
+        for t,ci,pat in product(trades,CITIES.get(c,[]),INTENTS):
+            if city and ci.lower()!=city.lower():
+                continue
+            queries.append({"query":pat.format(trade=t,city=ci),"country":c,"trade":t,"city":ci})
+            if len(queries)>=limit:
+                return queries
+    return queries
