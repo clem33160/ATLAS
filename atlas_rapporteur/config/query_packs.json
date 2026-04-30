@@ -1,0 +1,21 @@
+{
+  "regions": {
+    "France": ["Paris", "Lyon"],
+    "Belgique": ["Bruxelles", "Liège"],
+    "Suisse romande": ["Genève", "Lausanne"],
+    "Luxembourg": ["Luxembourg"],
+    "Canada francophone": ["Montréal", "Québec"]
+  },
+  "trades": ["plomberie", "chauffage", "pompe à chaleur", "chaudière", "climatisation", "électricité", "serrurerie", "vitrerie", "toiture", "charpente", "isolation", "façade", "peinture", "maçonnerie", "rénovation complète", "salle de bain", "cuisine", "terrassement", "piscine", "panneaux solaires"],
+  "patterns": [
+    "cherche {trade} {city}",
+    "besoin d’un {trade} {city}",
+    "devis rénovation {city}",
+    "fuite urgent plombier {city}",
+    "remplacement chaudière {city}",
+    "travaux toiture devis {city}",
+    "appel d’offres travaux {trade} {country}",
+    "marché public rénovation chauffage {country}",
+    "avis marché travaux toiture {country}"
+  ]
+}

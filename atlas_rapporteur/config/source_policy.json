@@ -1,0 +1,6 @@
+{
+  "allowed_schemes": ["http", "https"],
+  "blocked_domains_contains": ["facebook.com", "linkedin.com"],
+  "max_fetch_per_run": 50,
+  "user_agent": "AtlasRapporteurBot/1.0 (public-source-compliance)"
+}

@@ -1,0 +1,7 @@
+{
+  "dry_run": true,
+  "analysis_model": "gpt-5.4",
+  "max_results": 20,
+  "countries": ["FR", "BE", "CH", "LU", "CA"],
+  "min_text_length": 80
+}

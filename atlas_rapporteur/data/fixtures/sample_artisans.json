@@ -1,0 +1,4 @@
+[
+  {"name":"Plombier Lyon Pro","trade":"plomberie","city":"Lyon","country":"France","phone":"0472000000","website":"https://plombier-lyon.example","source":"https://annuaire-public.example/lyon-plombier"},
+  {"name":"Chauffage Bruxelles SA","trade":"chauffage","city":"Bruxelles","country":"Belgique","phone":"021100000","website":"https://chauffage-bruxelles.example","source":"https://annuaire-public.example/bruxelles-chauffage"}
+]
