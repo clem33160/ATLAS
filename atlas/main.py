@@ -47,6 +47,67 @@ def parse_source_urls() -> list[dict]:
     return items
 
 
+def parse_human_confirmations() -> list[dict]:
+    rows = []
+    path = INBOX / "human_confirmations.csv"
+    if not path.exists():
+        return rows
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
+        if i == 0 or not line.strip():
+            continue
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) < 8:
+            continue
+        rows.append({
+            "lead_id": parts[0],
+            "confirmed_at": parts[1],
+            "reviewer": parts[2],
+            "decision": parts[3],
+            "evidence_checked": parts[4],
+            "artisan_checked": parts[5],
+            "consent_status": parts[6],
+            "notes": ",".join(parts[7:]).strip(),
+        })
+    return rows
+
+
+def apply_human_confirmations(leads: list[dict], artisans: list[dict], confirmations: list[dict]) -> list[str]:
+    warnings = []
+    consent_allowed = {"NON_DEMANDÉ", "ACCORD_TRANSMISSION", "À_CLARIFIER"}
+    lead_index = {l.get("lead_id"): l for l in leads}
+    has_real_artisan = any(a.get("source_kind") != REALITY_DEMO and a.get("source_url") for a in artisans)
+    for c in confirmations:
+        lead = lead_index.get(c.get("lead_id"))
+        if not lead:
+            warnings.append(f"lead inconnu: {c.get('lead_id')}")
+            continue
+        reasons = []
+        if c.get("decision") != "CONFIRM_BUSINESS_READY":
+            reasons.append("decision != CONFIRM_BUSINESS_READY")
+        if c.get("evidence_checked") != "yes":
+            reasons.append("evidence_checked != yes")
+        if c.get("artisan_checked") != "yes":
+            reasons.append("artisan_checked != yes")
+        if not lead.get("source_url"):
+            reasons.append("source_url manquante")
+        if lead.get("reality_status") == REALITY_DEMO:
+            reasons.append("lead DEMO")
+        if not has_real_artisan:
+            reasons.append("aucun artisan non-DEMO disponible")
+        if c.get("consent_status") not in consent_allowed:
+            reasons.append("consent_status invalide")
+        if reasons:
+            lead["human_validation_status"] = "À_VALIDER"
+            lead["human_validation_reason"] = "; ".join(reasons)
+            continue
+        lead["reality_status"] = "HUMAN_CONFIRMED"
+        lead["qualification_status"] = "BUSINESS_READY"
+        lead["pipeline_status"] = "À_APPELER"
+        lead["human_validation_status"] = "HUMAN_CONFIRMED"
+        lead["human_validation_reason"] = "Validation humaine complète"
+    return warnings
+
+
 def run_pipeline(mode: str = "run") -> dict:
     paths = ensure_runtime_dirs(BASE)
     artisans, artisan_warnings = resolve_artisans(BASE)
@@ -76,11 +137,12 @@ def run_pipeline(mode: str = "run") -> dict:
     for lead in leads:
         score_lead(lead, has_real_artisan=has_real_artisan)
 
+    human_warnings = apply_human_confirmations(leads, artisans, parse_human_confirmations())
     governance_warnings = validate_no_fake_real_data(leads, artisans, crm_actions=[])
     readiness = compute_business_readiness(leads, artisans, call_feedback_count=0)
     ready = [l for l in leads if l.get("qualification_status") == "BUSINESS_READY" and l.get("reality_status") != REALITY_DEMO]
 
-    lead_report = build_lead_report(len(leads), len(ready), governance_warnings)
+    lead_report = build_lead_report(len(leads), len(ready), governance_warnings, leads, human_warnings)
     call_sheet_md, call_sheet_rows = build_daily_call_sheet(leads, artisans)
     readiness_md = "# Business Readiness\n\n" + f"Score actuel: {readiness['business_readiness_score']}/10\n" + f"Plafond actuel: {readiness['max_score_with_current_data']}/10\n\n## Pourquoi pas 10/10\n" + "\n".join([f"- {x}" for x in readiness["blocking_reasons"]]) + "\n\n## Ce qui est déjà fonctionnel\n- Pipeline canonique unique\n- Sorties runtime structurées\n- Contrôles anti-faux réel\n\n## Ce qui manque\n- Plus de leads BUSINESS_READY vérifiés\n- Plus d'artisans vérifiables\n- Retours d'appels CRM réels\n- Confirmations HUMAN_CONFIRMED tracées\n\n## Actions\n" + "\n".join([f"- {x}" for x in readiness["actions"]])
 

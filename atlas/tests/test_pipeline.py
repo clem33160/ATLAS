@@ -5,7 +5,7 @@ from pathlib import Path
 
 from atlas.business.readiness import compute_business_readiness
 from atlas.governance import validate_no_fake_real_data
-from atlas.main import run_pipeline
+from atlas.main import apply_human_confirmations, run_pipeline
 from atlas.models import QUALIFICATION_BUSINESS_READY, REALITY_DEMO
 
 
@@ -65,6 +65,42 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, msg=f"{cmd}\n{proc.stdout}\n{proc.stderr}")
         proc = subprocess.run("./atlas/scripts/business_check.sh", shell=True, check=False, capture_output=True, text=True, env={"ATLAS_SKIP_TEST_SH": "1"})
         self.assertEqual(proc.returncode, 0, msg=f"./atlas/scripts/business_check.sh\n{proc.stdout}\n{proc.stderr}")
+
+    def test_human_confirmation_valid_to_business_ready(self):
+        leads = [{"lead_id": "l1", "source_url": "https://real.tld/1", "reality_status": "PARTIALLY_VERIFIED", "qualification_status": "TO_VALIDATE", "pipeline_status": "NEW"}]
+        artisans = [{"source_kind": "OFFICIAL", "source_url": "https://artisan.tld"}]
+        warnings = apply_human_confirmations(leads, artisans, [{
+            "lead_id": "l1", "decision": "CONFIRM_BUSINESS_READY", "evidence_checked": "yes", "artisan_checked": "yes", "consent_status": "NON_DEMANDÉ"
+        }])
+        self.assertEqual(warnings, [])
+        self.assertEqual(leads[0]["qualification_status"], "BUSINESS_READY")
+        self.assertEqual(leads[0]["reality_status"], "HUMAN_CONFIRMED")
+        self.assertEqual(leads[0]["pipeline_status"], "À_APPELER")
+
+    def test_human_confirmation_demo_refused(self):
+        leads = [{"lead_id": "l1", "source_url": "https://real.tld/1", "reality_status": "DEMO", "qualification_status": "TO_VALIDATE"}]
+        artisans = [{"source_kind": "OFFICIAL", "source_url": "https://artisan.tld"}]
+        apply_human_confirmations(leads, artisans, [{"lead_id": "l1", "decision": "CONFIRM_BUSINESS_READY", "evidence_checked": "yes", "artisan_checked": "yes", "consent_status": "NON_DEMANDÉ"}])
+        self.assertEqual(leads[0]["qualification_status"], "TO_VALIDATE")
+        self.assertIn("lead DEMO", leads[0]["human_validation_reason"])
+
+    def test_human_confirmation_refusals_and_unknown(self):
+        leads = [{"lead_id": "l1", "source_url": "https://real.tld/1", "reality_status": "PARTIALLY_VERIFIED", "qualification_status": "TO_VALIDATE"}]
+        artisans = [{"source_kind": "DEMO", "source_url": "https://example.org"}]
+        apply_human_confirmations(leads, artisans, [{"lead_id": "l1", "decision": "CONFIRM_BUSINESS_READY", "evidence_checked": "no", "artisan_checked": "no", "consent_status": "NON_DEMANDÉ"}])
+        self.assertEqual(leads[0]["qualification_status"], "TO_VALIDATE")
+        self.assertIn("evidence_checked != yes", leads[0]["human_validation_reason"])
+        self.assertIn("artisan_checked != yes", leads[0]["human_validation_reason"])
+        warnings = apply_human_confirmations(leads, artisans, [{"lead_id": "unknown", "decision": "CONFIRM_BUSINESS_READY", "evidence_checked": "yes", "artisan_checked": "yes", "consent_status": "NON_DEMANDÉ"}])
+        self.assertTrue(any("lead inconnu" in w for w in warnings))
+
+    def test_business_readiness_increase_only_when_real_validation(self):
+        base_leads = [{"lead_id": "l1", "reality_status": "PARTIALLY_VERIFIED", "qualification_status": "TO_VALIDATE", "source_url": "https://real.tld/1"}]
+        artisans = [{"source_kind": "OFFICIAL", "source_url": "https://artisan.tld"}]
+        before = compute_business_readiness(base_leads, artisans)
+        apply_human_confirmations(base_leads, artisans, [{"lead_id": "l1", "decision": "CONFIRM_BUSINESS_READY", "evidence_checked": "yes", "artisan_checked": "yes", "consent_status": "À_CLARIFIER"}])
+        after = compute_business_readiness(base_leads, artisans)
+        self.assertGreater(after["business_readiness_score"], before["business_readiness_score"])
 
 
 if __name__ == "__main__":
