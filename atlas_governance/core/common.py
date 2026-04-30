@@ -1,44 +1,82 @@
 from __future__ import annotations
-import hashlib, json, os
-from pathlib import Path
+import hashlib
+import json
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Iterator
 
-FORBIDDEN_TOKENS = ["final","new","patch","copy","v2","v3","old","backup","tmp","brouillon","test_final"]
+FORBIDDEN_TOKENS = ("v2", "final", "new", "patch", "copy", "old", "backup", "tmp")
+EXCLUDE_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules"}
+
+
+def repo_root(start: Path | None = None) -> Path:
+    p = (start or Path.cwd()).resolve()
+    for c in [p, *p.parents]:
+        if (c / ".git").exists() and (c / "atlas_governance").exists():
+            return c
+    raise FileNotFoundError("ATLAS root not found")
+
 
 def project_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return repo_root()
+
 
 def governance_root() -> Path:
-    return project_root()/"atlas_governance"
+    return repo_root() / "atlas_governance"
+
 
 def runtime_dir() -> Path:
-    d=governance_root()/"runtime"
+    d = governance_root() / "runtime"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
-def read_json(path: Path, default=None):
-    if not path.exists():
-        return {} if default is None else default
-    return json.loads(path.read_text(encoding='utf-8'))
-
-def write_json(path: Path, data):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2)+"\n", encoding='utf-8')
-
-def write_md(path: Path, text: str):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding='utf-8')
-
-def sha256_file(path: Path) -> str:
-    h=hashlib.sha256()
-    with path.open('rb') as f:
-        for c in iter(lambda:f.read(8192), b''):
-            h.update(c)
-    return h.hexdigest()
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-def suspicious_name(p: str)->bool:
-    l=p.lower()
-    return any(t in l for t in FORBIDDEN_TOKENS)
+
+def read_json(path: Path, default=None):
+    if not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def write_md(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content.rstrip() + "\n", encoding="utf-8")
+
+
+def jread(path: Path, default=None):
+    return read_json(path, default)
+
+
+def jwrite(path: Path, data):
+    write_json(path, data)
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def suspicious_name(value: str) -> bool:
+    low = value.lower()
+    return any(tok in low for tok in FORBIDDEN_TOKENS)
+
+
+def iter_project_files(include_runtime: bool = False) -> Iterator[Path]:
+    root = repo_root()
+    for p in root.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(root)
+        parts = set(rel.parts)
+        if EXCLUDE_DIRS & parts:
+            continue
+        if ("runtime" in parts) and not include_runtime:
+            continue
+        yield p

@@ -1,0 +1,6 @@
+{
+  "atlas://domain/business_leads/canon": "atlas/business",
+  "atlas://script/rapporteur_affaires/run": "atlas_rapporteur/scripts",
+  "atlas://governance/authority_index": "atlas_governance/config/atlas_authority_index.json",
+  "atlas://test/navigation/core": "atlas_governance/tests/test_navigation_core.py"
+}
