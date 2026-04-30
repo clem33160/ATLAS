@@ -1,0 +1,12 @@
+{
+  "brave": {"enabled": true, "paid": true},
+  "tavily": {"enabled": true, "paid": true},
+  "boamp": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "ted": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "canadabuys": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "seao": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "simap": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "common_crawl": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "legal_sitemap": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
+  "google_cse": {"enabled": true, "paid": true}
+}
