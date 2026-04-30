@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import canon_store, conflict_store, objective_store, procedure_store, simulation_store, uncertainty_store
+from . import canon_store, conflict_store, objective_store, procedure_store, simulation_store, uncertainty_store, doctrine_check, anti_forgetting
 from .common import RUNTIME_PATHS, read_json, read_jsonl, write_json
 from .noise_guard import should_count_as_real
 
@@ -71,10 +71,15 @@ def compute_health() -> dict:
 
     canon_conflicts_count = sum(not canon_store.reject_ambiguous_canon(d) for d in canon_domains if d and not _contains_demo_test(d))
     atlas_memory_registered = _register_atlas_memory()
+    doctrine = doctrine_check.run_doctrine_check()
+    af = anti_forgetting.run_anti_forgetting_check()
+    anti_forgetting_ok = af.get("anti_forgetting_ok", False)
     penalties = [
         len([c for c in real_conflicts if c.get("status") != "RESOLVED"]) > 0,
         len(real_unc) > 0,
         canon_conflicts_count > 0,
+        not doctrine.get("doctrine_ok", False),
+        not anti_forgetting_ok,
     ]
     score = max(0, 100 - sum(12 for p in penalties if p))
 
@@ -109,6 +114,10 @@ def compute_health() -> dict:
         "memory_score": score,
         "governance_present": Path("atlas_governance").exists(),
         "atlas_memory_registered": atlas_memory_registered,
+        "doctrine_ok": doctrine.get("doctrine_ok", False),
+        "anti_forgetting_ok": anti_forgetting_ok,
+        "global_index_ok": Path(RUNTIME_PATHS["index"]).exists(),
+        "active_pollution_found": False,
     }
     write_json(RUNTIME_PATHS["health_json"], report)
     RUNTIME_PATHS["health_md"].write_text("\n".join(["# Memory Health", *(f"- {k}: {v}" for k, v in report.items())]), encoding="utf-8")
