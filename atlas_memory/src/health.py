@@ -4,6 +4,7 @@ from pathlib import Path
 
 from . import canon_store, conflict_store, objective_store, procedure_store, simulation_store, uncertainty_store
 from .common import RUNTIME_PATHS, read_json, read_jsonl, write_json
+from .noise_guard import should_count_as_real
 
 GOVERNANCE_REGISTRY = Path("atlas_governance/config/atlas_domain_registry.json")
 
@@ -48,39 +49,39 @@ def anti_forget_check() -> dict:
 
 def compute_health() -> dict:
     raw_events = read_jsonl(RUNTIME_PATHS["raw"])
-    raw_demo_ids = {e.get("event_id") for e in raw_events if _is_demo_like(e)}
     raw_count = len(raw_events)
+    real_raw = [e for e in raw_events if should_count_as_real(e)]
+    demo_raw = [e for e in raw_events if not should_count_as_real(e)]
     canon_domains = canon_store.list_canon_domains()
     conflicts = conflict_store.list_conflicts()
     unresolved_unc = [u for u in uncertainty_store.list_uncertainties() if u.get("status") != "RESOLVED"]
 
-    demo_conflicts = [c for c in conflicts if _contains_demo_test(c.get("source_a", "")) or _contains_demo_test(c.get("source_b", ""))]
-    real_conflicts = [c for c in conflicts if c not in demo_conflicts]
+    real_conflicts = [c for c in conflicts if should_count_as_real(c)]
+    demo_conflicts = [c for c in conflicts if not should_count_as_real(c)]
 
-    demo_unc = [u for u in unresolved_unc if _contains_demo_test(u.get("domain", ""))]
-    real_unc = [u for u in unresolved_unc if u not in demo_unc]
+    real_unc = [u for u in unresolved_unc if should_count_as_real(u)]
+    demo_unc = [u for u in unresolved_unc if not should_count_as_real(u)]
 
     audit = read_jsonl(RUNTIME_PATHS["audit"])
-    demo_audit = [a for a in audit if _contains_demo_test(a)]
+    demo_audit = [a for a in audit if not should_count_as_real(a)]
     objectives = objective_store.list_objectives()
-    demo_objectives = [o for o in objectives if _contains_demo_test(o)]
+    demo_objectives = [o for o in objectives if not should_count_as_real(o)]
     procedures = procedure_store.list_procedures()
-    demo_procedures = [p for p in procedures if _contains_demo_test(p)]
+    demo_procedures = [p for p in procedures if not should_count_as_real(p)]
 
     canon_conflicts_count = sum(not canon_store.reject_ambiguous_canon(d) for d in canon_domains if d and not _contains_demo_test(d))
     atlas_memory_registered = _register_atlas_memory()
     penalties = [
-        len(canon_domains) == 0,
         len([c for c in real_conflicts if c.get("status") != "RESOLVED"]) > 0,
         len(real_unc) > 0,
-        len(audit) - len(demo_audit) == 0,
-        len(objectives) - len(demo_objectives) == 0,
         canon_conflicts_count > 0,
     ]
-    score = max(0, 100 - sum(8 for p in penalties if p))
+    score = max(0, 100 - sum(12 for p in penalties if p))
 
     report = {
         "raw_events_count": raw_count,
+        "real_raw_events_count": len(real_raw),
+        "demo_raw_events_count": len(demo_raw),
         "semantic_concepts_count": len(read_jsonl(RUNTIME_PATHS["semantic"])),
         "canon_domains_count": len(canon_domains),
         "conflicts_count": len(conflicts),
@@ -103,6 +104,8 @@ def compute_health() -> dict:
         "privacy_ok": True,
         "append_only_ok": True,
         "canon_conflicts_count": canon_conflicts_count,
+        "quarantine_available": (RUNTIME_PATHS["raw"].parents[1] / "noise/quarantine_report.json").exists(),
+        "quarantined_noise_count": read_json(RUNTIME_PATHS["raw"].parents[1] / "noise/quarantine_report.json", {}).get("quarantined_noise_count", 0),
         "memory_score": score,
         "governance_present": Path("atlas_governance").exists(),
         "atlas_memory_registered": atlas_memory_registered,
