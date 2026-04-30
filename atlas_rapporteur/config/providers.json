@@ -1,12 +1,341 @@
 {
-  "brave": {"enabled": true, "paid": true},
-  "tavily": {"enabled": true, "paid": true},
-  "boamp": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "ted": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "canadabuys": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "seao": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "simap": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "common_crawl": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "legal_sitemap": {"enabled": false, "paid": false, "status": "TODO_REAL_IMPLEMENTATION"},
-  "google_cse": {"enabled": true, "paid": true}
+  "providers": [
+    {
+      "provider_id": "boamp_fr",
+      "name": "BOAMP France",
+      "country": "FR",
+      "source_type": "OPEN_DATA_API",
+      "legal_status": "active",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://api.dila.gouv.fr/boamp",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "private_data_collection",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "respect official API limits",
+      "robots_policy": "api_terms_only",
+      "proof_required": [
+        "source_url",
+        "date",
+        "title",
+        "excerpt"
+      ],
+      "output_schema": "public_tender_notice_v1"
+    },
+    {
+      "provider_id": "data_gouv_fr",
+      "name": "data.gouv.fr",
+      "country": "FR",
+      "source_type": "OPEN_DATA_CATALOG",
+      "legal_status": "catalog_only",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://www.data.gouv.fr",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "invented_leads",
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "catalog usage fair use",
+      "robots_policy": "respect robots and API docs",
+      "proof_required": [
+        "dataset_url",
+        "metadata"
+      ],
+      "output_schema": "dataset_record_v1"
+    },
+    {
+      "provider_id": "ted_eu",
+      "name": "TED Europe",
+      "country": "EU",
+      "source_type": "OPEN_DATA_API",
+      "legal_status": "active",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://ted.europa.eu",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "official endpoint limits",
+      "robots_policy": "api_terms_only",
+      "proof_required": [
+        "notice_id",
+        "url",
+        "country",
+        "cpv"
+      ],
+      "output_schema": "public_tender_notice_v1"
+    },
+    {
+      "provider_id": "canadabuys",
+      "name": "CanadaBuys",
+      "country": "CA",
+      "source_type": "OPEN_DATA_DATASET",
+      "legal_status": "active",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://canadabuys.canada.ca",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "dataset periodic polling",
+      "robots_policy": "respect terms",
+      "proof_required": [
+        "dataset_url",
+        "organisation",
+        "date"
+      ],
+      "output_schema": "public_tender_notice_v1"
+    },
+    {
+      "provider_id": "seao_qc",
+      "name": "SEAO Québec",
+      "country": "CA-QC",
+      "source_type": "OPEN_DATA_JSON",
+      "legal_status": "active",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://www.seao.ca",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "json feed limits",
+      "robots_policy": "respect terms",
+      "proof_required": [
+        "avis",
+        "organisme",
+        "contact_public"
+      ],
+      "output_schema": "public_tender_notice_v1"
+    },
+    {
+      "provider_id": "bosa_be",
+      "name": "BOSA e-Procurement",
+      "country": "BE",
+      "source_type": "PUBLIC_PROCUREMENT_PORTAL",
+      "legal_status": "manual_review_required",
+      "enabled": false,
+      "requires_api_key": false,
+      "requires_permission": true,
+      "base_url": "https://www.publicprocurement.be",
+      "allowed_modes": [
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "manual review",
+      "robots_policy": "portal rules",
+      "proof_required": [
+        "public_notice",
+        "url"
+      ],
+      "output_schema": "public_tender_notice_v1"
+    },
+    {
+      "provider_id": "simap_ch",
+      "name": "SIMAP Suisse",
+      "country": "CH",
+      "source_type": "PUBLIC_PROCUREMENT_PORTAL",
+      "legal_status": "manual_review_required",
+      "enabled": false,
+      "requires_api_key": false,
+      "requires_permission": true,
+      "base_url": "https://www.simap.ch",
+      "allowed_modes": [
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "manual review",
+      "robots_policy": "portal rules",
+      "proof_required": [
+        "publication",
+        "url"
+      ],
+      "output_schema": "public_tender_notice_v1"
+    },
+    {
+      "provider_id": "opendata_swiss",
+      "name": "opendata.swiss",
+      "country": "CH",
+      "source_type": "OPEN_DATA_CATALOG",
+      "legal_status": "catalog_only",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://opendata.swiss",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "invented_leads",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "catalog fair use",
+      "robots_policy": "respect robots",
+      "proof_required": [
+        "dataset",
+        "official_source"
+      ],
+      "output_schema": "dataset_record_v1"
+    },
+    {
+      "provider_id": "od_wb",
+      "name": "Open Data Wallonie-Bruxelles",
+      "country": "BE",
+      "source_type": "OPEN_DATA_CATALOG",
+      "legal_status": "catalog_only",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://www.odwb.be",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "invented_leads",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "catalog fair use",
+      "robots_policy": "respect robots",
+      "proof_required": [
+        "dataset",
+        "url"
+      ],
+      "output_schema": "dataset_record_v1"
+    },
+    {
+      "provider_id": "opendatastore_brussels",
+      "name": "Open Data Brussels",
+      "country": "BE",
+      "source_type": "OPEN_DATA_API",
+      "legal_status": "active",
+      "enabled": true,
+      "requires_api_key": false,
+      "requires_permission": false,
+      "base_url": "https://opendatastore.brussels",
+      "allowed_modes": [
+        "open-data",
+        "discovery"
+      ],
+      "forbidden_modes": [
+        "captcha_bypass",
+        "forced_login",
+        "auto_contact"
+      ],
+      "rate_limit_policy": "api rate limits",
+      "robots_policy": "api_terms_only",
+      "proof_required": [
+        "dataset",
+        "url",
+        "organisme"
+      ],
+      "output_schema": "dataset_record_v1"
+    }
+  ],
+  "blocked_or_permission_required": [
+    {
+      "provider_id": "leboncoin",
+      "legal_status": "blocked_without_permission",
+      "reason": "Source non activée : autorisation explicite requise.",
+      "classification": "do_not_scrape"
+    },
+    {
+      "provider_id": "allovoisins",
+      "legal_status": "blocked_without_permission",
+      "reason": "Source non activée : autorisation explicite requise.",
+      "classification": "do_not_scrape"
+    },
+    {
+      "provider_id": "plateformes_privees",
+      "legal_status": "manual_review_required",
+      "reason": "Source non activée : autorisation explicite requise.",
+      "classification": "manual_review_required"
+    }
+  ],
+  "brave": {
+    "enabled": true,
+    "paid": true
+  },
+  "tavily": {
+    "enabled": true,
+    "paid": true
+  },
+  "boamp": {
+    "enabled": false,
+    "paid": false,
+    "status": "TODO_REAL_IMPLEMENTATION"
+  },
+  "ted": {
+    "enabled": false,
+    "paid": false,
+    "status": "TODO_REAL_IMPLEMENTATION"
+  },
+  "canadabuys_legacy": {
+    "enabled": false,
+    "paid": false
+  },
+  "seao": {
+    "enabled": false,
+    "paid": false
+  },
+  "simap": {
+    "enabled": false,
+    "paid": false
+  },
+  "common_crawl": {
+    "enabled": false,
+    "paid": false
+  },
+  "legal_sitemap": {
+    "enabled": false,
+    "paid": false
+  },
+  "google_cse": {
+    "enabled": true,
+    "paid": true
+  }
 }
