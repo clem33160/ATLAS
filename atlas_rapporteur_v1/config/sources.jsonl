@@ -1,0 +1,5 @@
+{"source_id":"boamp","source_name":"BOAMP Open Data","priority":1,"active":true,"connector":"connectors/boamp.sh","public":true,"notes":"Official French public procurement source"}
+{"source_id":"place","source_name":"PLACE Marches Publics","priority":2,"active":false,"connector":"connectors/place_stub.sh","public":true,"notes":"Stub only; legal/public checks required"}
+{"source_id":"ted","source_name":"TED Europe","priority":2,"active":false,"connector":"connectors/ted_stub.sh","public":true,"notes":"Stub only"}
+{"source_id":"seao","source_name":"SEAO Quebec","priority":2,"active":false,"connector":"connectors/seao_stub.sh","public":true,"notes":"Stub only"}
+{"source_id":"canadabuys","source_name":"CanadaBuys","priority":2,"active":false,"connector":"connectors/canadabuys_stub.sh","public":true,"notes":"Stub only"}

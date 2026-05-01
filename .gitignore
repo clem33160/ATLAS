@@ -15,3 +15,10 @@ atlas_memory/runtime/*
 
 !atlas/runtime/.gitkeep
 !atlas_memory/runtime/reports/atlas_10_10_upgrade_report.md
+
+# Atlas Rapporteur V1 generated runtime artifacts
+atlas_rapporteur_v1/runtime/
+atlas_rapporteur_v1/**/*.log
+atlas_rapporteur_v1/runtime/**/*.jsonl
+atlas_rapporteur_v1/runtime/**/*.csv
+atlas_rapporteur_v1/runtime/**/*.md
