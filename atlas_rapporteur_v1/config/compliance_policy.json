@@ -1,0 +1,8 @@
+{
+  "public_sources_only": true,
+  "human_validation_required": true,
+  "auto_contact": false,
+  "forbidden_source_patterns": ["leboncoin", "allovoisins", "facebook", "travaux.com", "habitatpresto", "houzz"],
+  "reject_url_patterns": ["/api", "/login", "/aide", "/help", "/portail", "captcha"],
+  "secret_detection_enabled": true
+}

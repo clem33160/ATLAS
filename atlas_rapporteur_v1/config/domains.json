@@ -1,0 +1,10 @@
+{
+  "keywords": {
+    "construction": ["travaux", "renovation", "batiment", "chantier", "ouvrage"],
+    "it": ["logiciel", "informatique", "cloud", "cyber", "application"],
+    "maintenance": ["maintenance", "entretien", "reparation"],
+    "services": ["prestation", "service", "assistance", "conseil"],
+    "energy": ["energie", "electrique", "chauffage", "solaire"]
+  },
+  "blocked_host_patterns": ["/api", "/login", "/aide", "/help", "/portail"]
+}

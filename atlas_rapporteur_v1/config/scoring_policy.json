@@ -1,0 +1,19 @@
+{
+  "weights": {
+    "source_reliability": 15,
+    "freshness": 15,
+    "domain_match": 15,
+    "amount_confidence": 20,
+    "proof_url": 10,
+    "location": 5,
+    "buyer_context": 5,
+    "human_action": 5,
+    "difficulty": 5,
+    "conversion_probability": 5
+  },
+  "caps": {
+    "without_proof": 40,
+    "without_amount": 70,
+    "fuzzy_domain": 60
+  }
+}
