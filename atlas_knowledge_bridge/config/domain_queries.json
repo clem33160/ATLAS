@@ -1,0 +1,6 @@
+{
+  "plomberie": ["plomberie", "tuyauterie", "sanitaire", "fuite d'eau"],
+  "chauffage": ["chauffage", "chaudière", "radiateur", "thermostat"],
+  "pompe_chaleur": ["pompe à chaleur", "PAC", "aérothermie", "géothermie"],
+  "renovation": ["rénovation", "isolation", "travaux", "bâtiment"]
+}
