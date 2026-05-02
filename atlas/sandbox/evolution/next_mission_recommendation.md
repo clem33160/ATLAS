@@ -1,8 +1,6 @@
 # Next Mission Recommendation
-- intégrer retours terrain réels anonymisés
-- calibrer scoring avec données de vrais dossiers
-- créer moteur de priorisation intervention
-- créer moteur de relance intelligente
-- créer méta-sandbox qui teste les tests plomberie
-- créer benchmark 100 cas internes
-- créer comparateur facture/devis/chantier
+
+- generated_at: 2026-05-02T05:54:07Z
+- focus: augmenter couverture tests scénarios plomberie (10 -> 20)
+- focus_2: détecteur d'incohérence inter-fichiers scoring/conformité/scénarios
+- rationale: améliorer valeur prouvée sans élargir périmètre sensible

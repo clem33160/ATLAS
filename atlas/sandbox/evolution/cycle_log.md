@@ -13,3 +13,7 @@
 
 - 2026-05-02T05:20:54Z | alert | test notification
 - 2026-05-02T12:00:00Z | mission | plomberie operating system internal intelligence | objectif: CRM + appels + factures + chantier + simulation 50 cas + scoring dynamique + self-play métier | statut: candidate created | décision: pending until tests pass
+
+- 2026-05-02T05:52:18Z | alert | test notification
+
+- 2026-05-02T05:54:07Z | alert | test notification
