@@ -1,0 +1,13 @@
+# NEXT BEST ACTION ENGINE
+
+## Logique
+1. Identifier le blocage principal.
+2. Prioriser sécurité > conformité > continuité opérationnelle > cash.
+3. Proposer une action unique, exécutable en moins de 15 minutes.
+4. Ajouter prérequis, responsable, preuve attendue.
+
+## Format
+- Action: ...
+- Responsable: ...
+- Délai cible: ...
+- Preuve d'exécution: ...
