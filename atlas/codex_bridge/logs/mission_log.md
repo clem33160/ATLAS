@@ -1,0 +1,1 @@
+# Mission Log (append-only)
