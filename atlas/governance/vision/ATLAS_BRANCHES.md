@@ -91,7 +91,7 @@
 - Horizon court terme : cas d’usage business.
 - Horizon long terme : réseau mobilité piloté par simulation.
 - Risques : régulation locale.
-- Premiers modules possibles : modèle dispatch.
+- Premiers modules possibles : modèle field assignment.
 
 ### Atlas Health
 - Mission : support décisionnel santé sous contrôle humain.
