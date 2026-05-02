@@ -6,3 +6,6 @@
 - last_decision: pending
 - last_checkpoint: none
 - alert: test notification
+- alert: test notification
+- alert: test notification
+- alert: test notification

@@ -7,3 +7,5 @@ Refuser toute amélioration candidate qui :
 - baisse la conformité
 - rend le scoring flou
 - crée un doublon canonique
+
+- promesse de prix certain -> refus
