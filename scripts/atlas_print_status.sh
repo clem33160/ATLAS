@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+mkdir -p \
+  "$ROOT/atlas/codex_bridge/queue" \
+  "$ROOT/atlas/codex_bridge/active" \
+  "$ROOT/atlas/codex_bridge/reports" \
+  "$ROOT/atlas/codex_bridge/accepted" \
+  "$ROOT/atlas/codex_bridge/rejected" \
+  "$ROOT/atlas/codex_bridge/logs" \
+  "$ROOT/atlas/codex_bridge/temp" \
+  "$ROOT/atlas/codex_bridge/templates" \
+  "$ROOT/atlas/business/plomberie" \
+  "$ROOT/atlas/sandbox/plomberie" \
+  "$ROOT/atlas/reports"
+
 chk(){ [[ -f "$1" ]] && echo "found" || echo "missing"; }
 vision=$(chk "$ROOT/atlas/governance/vision/ATLAS_MASTER_VISION.md")
 obj=$(chk "$ROOT/atlas/governance/vision/ATLAS_OBJECTIVE.md")
