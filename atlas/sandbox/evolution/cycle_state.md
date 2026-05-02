@@ -10,3 +10,5 @@
 - alert: test notification
 - alert: test notification
 - alert: test notification
+- alert: test notification
+- alert: test notification

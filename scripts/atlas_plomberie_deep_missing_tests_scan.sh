@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+OUT="atlas/sandbox/plomberie/MISSING_TESTS_REPORT.md"
+cat > "$OUT" <<'EOF'
 # Missing Tests Report
 
 ## tests existants
@@ -17,3 +21,6 @@
 
 ## justification
 - priorité business + sécurité + auditabilité
+EOF
+
+echo "deep missing tests report written: $OUT"
