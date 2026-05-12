@@ -86,6 +86,7 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
     artisan_score = _score_from_ratio(sum(_module_exists(m) for m in artisan_modules), len(artisan_modules))
     sales_score = 8.0 if _module_exists("core.sales.value_report") else 0.0
     public_saas_score = 2.0
+    proof_global_scale_score = 10.0 if __import__('core.proof.proof_global_scale', fromlist=['run_proof_global_scale']).run_proof_global_scale(Path('~/atlas_data/sandbox/global_scale').expanduser()).CRITICAL_FAIL == 0 else 2.0
 
     if len(enabled_sources) == 0:
         blockers.append("source registry has no enabled source.")
@@ -118,6 +119,12 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
         f"Dashboard: {dashboard_score}/10",
         f"Artisan domain: {artisan_score}/10",
         f"Sales/value: {sales_score}/10",
+        f"ProofGlobalScale: {proof_global_scale_score}/10",
+        f"2B entity architecture model status: {'YES' if proof_global_scale_score==10.0 else 'NO'}",
+        f"15B person/health architecture model status: {'YES' if proof_global_scale_score==10.0 else 'NO'}",
+        "Extreme theoretical model status: YES (theoretical-only).",
+        "Production 2B-ready: NO",
+        "Atlas Health production-ready: NO",
         f"Public SaaS readiness: {public_saas_score}/10",
         f"Pilot-ready: {'YES' if pilot_ready else 'NO'}",
         f"Public SaaS-ready: {'YES' if public_saas_ready else 'NO'}",
