@@ -1,0 +1,28 @@
+entities:
+  - client
+  - company
+  - artisan
+  - job
+  - intervention
+  - quote
+  - invoice
+  - payment
+  - tax
+  - part
+  - tool
+  - urgency
+  - risk
+  - location
+  - proof
+
+seeds:
+  - fuite évier
+  - fuite toiture
+  - dégorgement
+  - chaudière
+  - chauffe-eau
+  - canalisation
+  - robinetterie
+  - assurance dégât des eaux
+  - devis intervention
+  - facture intervention

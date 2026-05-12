@@ -1,0 +1,27 @@
+paths:
+  wikidata_dump: "~/atlas_data/wikidata/latest-truthy.nt"
+  sirene_data: "~/atlas_data/sirene/sirene_light.csv"
+  document_root: "~/atlas_data/documents"
+  indexes_path: "~/atlas_data/indexes"
+  google_token_path: "~/atlas_data/secrets/google_token.json"
+  gmail_import_path: "~/atlas_data/imports/gmail"
+  sandbox_test_path: "~/atlas_data/sandbox/proof1000"
+
+sources:
+  - source_id: wikidata_local
+    source_type: knowledge_graph
+    local_path: "~/atlas_data/wikidata/latest-truthy.nt"
+    enabled: true
+    sensitivity: public
+    allowed_roles: [admin, analyst]
+    provenance_rules: "source must be checksumed and timestamped"
+    test_status: pending
+
+  - source_id: sirene_local
+    source_type: business_registry
+    local_path: "~/atlas_data/sirene/sirene_light.csv"
+    enabled: true
+    sensitivity: internal
+    allowed_roles: [admin, analyst]
+    provenance_rules: "import must be provenance-logged"
+    test_status: pending
