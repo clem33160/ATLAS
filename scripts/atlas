@@ -15,8 +15,16 @@ from pathlib import Path
 print(run_proof1000(Path('/tmp/proof1000')).CRITICAL_FAIL)
 PY
     ;;
-  readiness) echo "readiness hook" ;;
-  value-report) echo "value-report hook" ;;
+  readiness) python - <<'PY'
+from core.cli_reports import readiness_report
+print(readiness_report(), end='')
+PY
+    ;;
+  value-report) python - <<'PY'
+from core.cli_reports import value_report
+print(value_report(), end='')
+PY
+    ;;
   dashboard) python apps/local_dashboard/server.py ;;
   *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|readiness|value-report|dashboard}"; exit 1 ;;
 esac
