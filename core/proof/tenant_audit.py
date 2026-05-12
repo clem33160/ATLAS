@@ -1,5 +1,5 @@
 import hashlib
-EVENT_TYPES={"tenant_created","user_invited","connector_linked","document_imported","document_classified","document_delivered","access_denied","hash_changed_refusal","export_requested","deletion_requested","backup_created","restore_tested"}
+EVENT_TYPES={"tenant_created","user_invited","user_created","connector_linked","document_imported","document_classified","document_indexed","document_delivered","search","delivery","access_denied","cross_tenant_refusal","hash_changed_refusal","export_requested","deletion_requested","backup_created","restore_tested"}
 class TenantAuditChain:
     def __init__(self): self.events=[]
     def append(self, tenant_id:str, event_type:str, payload:dict):
