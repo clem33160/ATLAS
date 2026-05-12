@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  index) echo "index hook" ;;
+  search) python - <<'PY'
+print('search hook')
+PY
+    ;;
+  deliver) echo "deliver hook" ;;
+  import-gmail) echo "import-gmail hook" ;;
+  proof1000) python - <<'PY'
+from core.proof.proof1000 import run_proof1000
+from pathlib import Path
+print(run_proof1000(Path('/tmp/proof1000')).CRITICAL_FAIL)
+PY
+    ;;
+  readiness) echo "readiness hook" ;;
+  value-report) echo "value-report hook" ;;
+  dashboard) python apps/local_dashboard/server.py ;;
+  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|readiness|value-report|dashboard}"; exit 1 ;;
+esac
