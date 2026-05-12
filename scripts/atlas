@@ -3,10 +3,7 @@ set -euo pipefail
 cmd="${1:-}"; shift || true
 case "$cmd" in
   index) echo "index hook" ;;
-  search) python - <<'PY'
-print('search hook')
-PY
-    ;;
+  search) echo "search hook" ;;
   deliver) echo "deliver hook" ;;
   import-gmail) echo "import-gmail hook" ;;
   proof1000) python - <<'PY'
@@ -25,6 +22,38 @@ from core.cli_reports import value_report
 print(value_report(), end='')
 PY
     ;;
+  tenant-create) python - <<'PY'
+from core.tenancy.tenant import Tenant
+print(Tenant.create(tenant_id='demo',tenant_name='Demo',legal_entity_name='Demo LLC',country='FR',region='EU',plan='pilot_local',status='active',data_region='eu',isolation_mode='local_single_tenant',billing_account_id='ba',admin_user_id='admin').tenant_id)
+PY
+    ;;
+  tenant-proof|proof-saas) python - <<'PY'
+from pathlib import Path
+from core.proof.proof_saas import run_proof_saas
+print(run_proof_saas(Path('/tmp/proof_saas')))
+PY
+    ;;
+  saas-readiness) python - <<'PY'
+from core.readiness.scoring import readiness_score
+print(readiness_score({'pilot_ready':True,'Multi-tenant isolation':8,'Tenant-aware RBAC':8,'Scale architecture':5}))
+PY
+    ;;
+  usage-report) python - <<'PY'
+from core.billing.invoices import usage_report
+print(usage_report('demo','artisan_basic',{'documents_imported':123}))
+PY
+    ;;
+  backup-check) python - <<'PY'
+from core.backup.snapshot import build_snapshot_manifest
+from core.backup.restore_check import simulate_restore
+print(simulate_restore(build_snapshot_manifest('demo',['doc1'])))
+PY
+    ;;
+  privacy-export) python - <<'PY'
+from core.privacy.export_request import new_export_request
+print(new_export_request('demo','admin'))
+PY
+    ;;
   dashboard) python apps/local_dashboard/server.py ;;
-  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|readiness|value-report|dashboard}"; exit 1 ;;
+  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas}"; exit 1 ;;
 esac
