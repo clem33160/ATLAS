@@ -12,6 +12,30 @@ from pathlib import Path
 print(run_proof1000(Path('/tmp/proof1000')).CRITICAL_FAIL)
 PY
     ;;
+  global-scale) python - <<'PY'
+from core.global_scale.report import global_scale_report
+import sys
+args=sys.argv[1:]
+entities=0
+persons=0
+if '--entities' in args:
+    entities=int(args[args.index('--entities')+1])
+if '--persons' in args:
+    persons=int(args[args.index('--persons')+1])
+if entities==0 and persons==0:
+    entities=2_000_000_000
+print(global_scale_report(target_entities=entities,target_persons=persons))
+PY
+    ;;
+  proof-global-scale) python - <<'PY'
+from pathlib import Path
+from core.proof.proof_global_scale import run_proof_global_scale
+res=run_proof_global_scale(Path('~/atlas_data/sandbox/global_scale').expanduser())
+print('ATLAS PROOF GLOBAL SCALE')
+print('CRITICAL_FAIL:',res.CRITICAL_FAIL)
+print('Decision:','PROOF_GLOBAL_SCALE_PASS' if res.CRITICAL_FAIL==0 else 'PROOF_GLOBAL_SCALE_FAIL')
+PY
+    ;;
   proof100-clients) python - <<'PY'
 from core.proof.proof100_clients import format_proof100_clients_report, run_proof100_clients
 print(format_proof100_clients_report(run_proof100_clients('~/atlas_data/sandbox/proof100_clients')))
@@ -60,5 +84,5 @@ print(new_export_request('demo','admin'))
 PY
     ;;
   dashboard) python apps/local_dashboard/server.py ;;
-  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|proof100-clients|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas}"; exit 1 ;;
+  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|proof100-clients|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas|global-scale|proof-global-scale}"; exit 1 ;;
 esac
