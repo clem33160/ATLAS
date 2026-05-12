@@ -12,6 +12,11 @@ from pathlib import Path
 print(run_proof1000(Path('/tmp/proof1000')).CRITICAL_FAIL)
 PY
     ;;
+  proof100-clients) python - <<'PY'
+from core.proof.proof100_clients import format_proof100_clients_report, run_proof100_clients
+print(format_proof100_clients_report(run_proof100_clients('~/atlas_data/sandbox/proof100_clients')))
+PY
+    ;;
   readiness) python - <<'PY'
 from core.cli_reports import readiness_report
 print(readiness_report(), end='')
@@ -55,5 +60,5 @@ print(new_export_request('demo','admin'))
 PY
     ;;
   dashboard) python apps/local_dashboard/server.py ;;
-  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas}"; exit 1 ;;
+  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|proof100-clients|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas}"; exit 1 ;;
 esac

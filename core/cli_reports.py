@@ -8,6 +8,7 @@ from core.config.miniyaml import load_simple_yaml
 from core.config.settings import load_paths
 from core.data_sources.registry import build_registry
 from core.proof.proof1000 import run_proof1000
+from core.proof.proof100_clients import run_proof100_clients
 from core.sales.value_report import build_value_report
 
 
@@ -39,9 +40,12 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
         blockers.append(f"config paths validation failed: {exc}")
 
     proof = run_proof1000(Path("/tmp/proof1000")) if run_proof else run_proof1000(Path("/tmp/proof1000"))
+    proof100_clients = run_proof100_clients(Path("~/atlas_data/sandbox/proof100_clients").expanduser())
     proof_score = 10.0 if proof.CRITICAL_FAIL == 0 else 2.0
     if proof.CRITICAL_FAIL != 0:
         blockers.append(f"proof1000 critical failures: {proof.CRITICAL_FAIL}")
+    if proof100_clients.critical_fail != 0:
+        blockers.append(f"proof100-clients critical failures: {proof100_clients.critical_fail}")
 
     sources = build_registry(payload.get("sources", []))
     enabled_sources = [s for s in sources if s.enabled]
@@ -107,6 +111,7 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
         f"Config: {config_score}/10",
         f"Documents: {documents_score}/10",
         f"Proof1000: {proof_score}/10 (PASS={proof.PASS}, WARN={proof.WARN}, FAIL={proof.FAIL}, CRITICAL_FAIL={proof.CRITICAL_FAIL})",
+        f"Proof100 clients: {10.0 if proof100_clients.critical_fail == 0 else 2.0}/10 (CRITICAL_FAIL={proof100_clients.critical_fail})",
         f"Access control: {access_score}/10",
         f"Connectors: {connectors_score}/10",
         f"Audit/proof: {audit_score}/10",
