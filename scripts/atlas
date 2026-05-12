@@ -12,7 +12,7 @@ from pathlib import Path
 print(run_proof1000(Path('/tmp/proof1000')).CRITICAL_FAIL)
 PY
     ;;
-  global-scale) python - <<'PY'
+  global-scale) python - "$@" <<'PY'
 from core.global_scale.report import global_scale_report
 import sys
 args=sys.argv[1:]
