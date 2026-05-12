@@ -41,6 +41,11 @@ from core.proof.proof100_clients import format_proof100_clients_report, run_proo
 print(format_proof100_clients_report(run_proof100_clients('~/atlas_data/sandbox/proof100_clients')))
 PY
     ;;
+  proof10000-clients) python - <<'PY'
+from core.proof.proof10000_clients import format_proof10000_clients_report, run_proof10000_clients
+print(format_proof10000_clients_report(run_proof10000_clients('~/atlas_data/sandbox/proof10000_clients')))
+PY
+    ;;
   readiness) python - <<'PY'
 from core.cli_reports import readiness_report
 print(readiness_report(), end='')
@@ -84,5 +89,5 @@ print(new_export_request('demo','admin'))
 PY
     ;;
   dashboard) python apps/local_dashboard/server.py ;;
-  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|proof100-clients|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas|global-scale|proof-global-scale}"; exit 1 ;;
+  *) echo "usage: atlas {index|search|deliver|import-gmail|proof1000|proof100-clients|proof10000-clients|readiness|value-report|dashboard|tenant-create|tenant-proof|saas-readiness|usage-report|backup-check|privacy-export|proof-saas|global-scale|proof-global-scale}"; exit 1 ;;
 esac
