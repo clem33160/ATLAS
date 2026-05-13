@@ -12,6 +12,7 @@ from core.proof.proof100_clients import run_proof100_clients
 from core.proof.proof10000_clients import run_proof10000_clients
 from core.proof.proof100000_clients import run_proof100000_clients
 from core.proof.proof_quadrillion_clients import run_proof_quadrillion_clients
+from core.proof.proof_realistic_clients import run_proof_realistic_clients
 from core.sales.value_report import build_value_report
 
 
@@ -47,6 +48,7 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
     proof10000_clients = run_proof10000_clients(Path('~/atlas_data/sandbox/proof10000_clients').expanduser())
     proof100000_clients = run_proof100000_clients(Path('~/atlas_data/sandbox/proof100000_clients').expanduser())
     proof_quadrillion_clients = run_proof_quadrillion_clients()
+    proof_realistic_clients = run_proof_realistic_clients(Path('~/atlas_data/sandbox/proof_realistic_clients').expanduser())
     proof_score = 10.0 if proof.CRITICAL_FAIL == 0 else 2.0
     if proof.CRITICAL_FAIL != 0:
         blockers.append(f"proof1000 critical failures: {proof.CRITICAL_FAIL}")
@@ -58,6 +60,8 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
         blockers.append(f"proof100000-clients critical failures: {proof100000_clients.critical_fail}")
     if proof_quadrillion_clients.critical_fail != 0:
         blockers.append(f"proof-quadrillion-clients critical failures: {proof_quadrillion_clients.critical_fail}")
+    if proof_realistic_clients.critical_fail != 0:
+        blockers.append(f"proof-realistic-clients critical failures: {proof_realistic_clients.critical_fail}")
 
     sources = build_registry(payload.get("sources", []))
     enabled_sources = [s for s in sources if s.enabled]
@@ -128,6 +132,9 @@ def readiness_report(config_file: str | Path = "atlas.config.yaml", run_proof: b
         f"Proof10000 clients: {'PASS' if proof10000_clients.critical_fail == 0 else 'FAIL'}",
         f"Proof100000 clients: {'PASS' if proof100000_clients.critical_fail == 0 else 'FAIL'}",
         f"ProofQuadrillion clients architecture model: {'PASS' if proof_quadrillion_clients.critical_fail == 0 else 'FAIL'}",
+        f"ProofRealistic clients: {'PASS' if proof_realistic_clients.critical_fail == 0 else 'FAIL'}",
+        f"Realistic workflow readiness score: {10.0 if proof_realistic_clients.critical_fail == 0 else 2.0}/10",
+        f"Product realism score: {10.0 if proof_realistic_clients.critical_fail == 0 else 2.0}/10",
         f"10k-client readiness score: {10.0 if proof10000_clients.critical_fail == 0 else 2.0}/10 (CRITICAL_FAIL={proof10000_clients.critical_fail})",
         f"100k-client readiness score: {10.0 if proof100000_clients.critical_fail == 0 else 2.0}/10 (CRITICAL_FAIL={proof100000_clients.critical_fail})",
         f"Access control: {access_score}/10",
