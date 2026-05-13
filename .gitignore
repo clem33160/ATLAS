@@ -22,3 +22,5 @@ atlas_rapporteur_v1/**/*.log
 atlas_rapporteur_v1/runtime/**/*.jsonl
 atlas_rapporteur_v1/runtime/**/*.csv
 atlas_rapporteur_v1/runtime/**/*.md
+
+.atlas_secrets/
