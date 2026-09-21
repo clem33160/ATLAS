@@ -1,9 +1,0 @@
-{
-  "mirrors": [
-    "local",
-    "github",
-    "external_disk",
-    "private_cloud",
-    "compressed_archive"
-  ]
-}

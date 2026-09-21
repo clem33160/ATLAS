@@ -1,0 +1,50 @@
+name: D8 public legacy history preservation
+on:
+  push:
+    branches: [d8-legacy-preservation]
+    paths: ['.github/workflows/d8-legacy-memory.yml']
+permissions:
+  contents: read
+concurrency:
+  group: d8-legacy-preservation
+  cancel-in-progress: false
+jobs:
+  preserve:
+    if: github.repository == 'clem33160/ATLAS' && github.run_number <= 2 && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Preserve public source only and restore independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/d8-public-memory"
+          cd "$RUNNER_TEMP/d8-public-memory"
+          git clone --mirror https://github.com/clem33160/ATLAS.git source.git
+          git -C source.git fetch origin '+refs/pull/*/head:refs/pull/*/head'
+          mkdir artifact
+          git -C source.git for-each-ref --format='%(refname) %(objectname)' | sort > artifact/refs.txt
+          git -C source.git rev-list --objects --all --no-object-names | sort -u > artifact/objects.txt
+          git -C source.git bundle create "$PWD/artifact/ATLAS-full-history.bundle" --all
+          git -C source.git bundle verify "$PWD/artifact/ATLAS-full-history.bundle"
+          git clone --mirror artifact/ATLAS-full-history.bundle restored.git
+          git -C restored.git fsck --full --no-reflogs
+          git -C restored.git for-each-ref --format='%(refname) %(objectname)' | sort > restored-refs.txt
+          git -C restored.git rev-list --objects --all --no-object-names | sort -u > restored-objects.txt
+          cmp artifact/refs.txt restored-refs.txt
+          cmp artifact/objects.txt restored-objects.txt
+          sha256sum artifact/ATLAS-full-history.bundle > artifact/SHA256SUMS.txt
+          python3 - <<'PY'
+          import datetime,json,pathlib,subprocess
+          p=pathlib.Path('artifact')
+          report={'schema':'axis.d8.public_legacy_receipt.v1','repository':'clem33160/ATLAS','captured_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'refs_count':len((p/'refs.txt').read_text().splitlines()),'reachable_objects':len((p/'objects.txt').read_text().splitlines()),'commits':int(subprocess.check_output(['git','-C','source.git','rev-list','--all','--count'])),'restore_verified':True,'git_fsck_verified':True,'global_memory_complete':False,'private_repositories_accessed':False,'product_progress_credit':0}
+          (p/'receipt.json').write_text(json.dumps(report,sort_keys=True,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Retain exact full-history archive
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: d8-public-legacy-${{ github.run_id }}
+          path: ${{ runner.temp }}/d8-public-memory/artifact/
+          retention-days: 90
+          if-no-files-found: error

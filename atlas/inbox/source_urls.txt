@@ -1,4 +1,0 @@
-# URL seule
-https://example.org/page
-# Format enrichi
-boamp|https://www.boamp.fr/pages/recherche/|Recherche manuelle marchés publics travaux
