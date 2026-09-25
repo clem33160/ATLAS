@@ -1,0 +1,52 @@
+name: AXIS Exact Repository Backup
+
+on:
+  push:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch every branch and tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
+          mkdir -p axis-exact-backup
+          git show-ref | LC_ALL=C sort > axis-exact-backup/SHOW_REF.txt
+          git for-each-ref --format='%(objectname) %(refname)' refs/remotes/origin refs/tags | LC_ALL=C sort > axis-exact-backup/REGISTERED_REFS.txt
+          git bundle create axis-exact-backup/REPOSITORY_ALL_REFS.bundle --all
+          git bundle verify axis-exact-backup/REPOSITORY_ALL_REFS.bundle > axis-exact-backup/BUNDLE_VERIFY.txt 2>&1
+          git fsck --full --strict > axis-exact-backup/GIT_FSCK.txt 2>&1
+          {
+            echo "repository=${GITHUB_REPOSITORY}"
+            echo "trigger_sha=${GITHUB_SHA}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
+            echo "created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "format=git-bundle-v2"
+            echo "scope=all fetched heads/tags plus reachable Git objects"
+            echo "lfs_or_submodule_policy=fail-closed by separate D8 inventory; none registered at install"
+          } > axis-exact-backup/MANIFEST.txt
+          (cd axis-exact-backup && sha256sum REPOSITORY_ALL_REFS.bundle SHOW_REF.txt REGISTERED_REFS.txt BUNDLE_VERIFY.txt GIT_FSCK.txt MANIFEST.txt > SHA256SUMS.txt)
+
+      - name: Upload exact backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: axis-exact-backup-${{ github.repository_id }}-${{ github.run_id }}
+          path: axis-exact-backup/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
