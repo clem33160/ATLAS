@@ -42,6 +42,17 @@ jobs:
           } > axis-exact-backup/MANIFEST.txt
           (cd axis-exact-backup && sha256sum REPOSITORY_ALL_REFS.bundle SHOW_REF.txt REGISTERED_REFS.txt BUNDLE_VERIFY.txt GIT_FSCK.txt MANIFEST.txt > SHA256SUMS.txt)
 
+      - name: Capture public ATLAS-V100 registered repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --mirror https://github.com/clem33160/ATLAS-V100.git /tmp/atlas-v100.git
+          git -C /tmp/atlas-v100.git fsck --full --strict > axis-exact-backup/ATLAS-V100_GIT_FSCK.txt 2>&1
+          git -C /tmp/atlas-v100.git show-ref | LC_ALL=C sort > axis-exact-backup/ATLAS-V100_SHOW_REF.txt
+          git -C /tmp/atlas-v100.git bundle create "$GITHUB_WORKSPACE/axis-exact-backup/ATLAS-V100_ALL_REFS.bundle" --all
+          git -C /tmp/atlas-v100.git bundle verify "$GITHUB_WORKSPACE/axis-exact-backup/ATLAS-V100_ALL_REFS.bundle" > axis-exact-backup/ATLAS-V100_BUNDLE_VERIFY.txt 2>&1
+          (cd axis-exact-backup && sha256sum ATLAS-V100_ALL_REFS.bundle ATLAS-V100_SHOW_REF.txt ATLAS-V100_GIT_FSCK.txt ATLAS-V100_BUNDLE_VERIFY.txt >> SHA256SUMS.txt)
+
       - name: Upload exact backup artifact
         uses: actions/upload-artifact@v4
         with:
