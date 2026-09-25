@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
           (cd axis-exact-backup && sha256sum ATLAS-V100_ALL_REFS.bundle ATLAS-V100_SHOW_REF.txt ATLAS-V100_GIT_FSCK.txt ATLAS-V100_BUNDLE_VERIFY.txt >> SHA256SUMS.txt)
 
       - name: Upload exact backup artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: axis-exact-backup-${{ github.repository_id }}-${{ github.run_id }}
           path: axis-exact-backup/
