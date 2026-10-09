@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 from . import active_context, anti_forgetting, audit_ledger, canon_store, health, objective_store, procedure_store, raw_store, self_memory, semantic_store
 from .common import RUNTIME_PATHS, ensure_runtime_structure, new_id, now_iso, read_json, read_jsonl
@@ -73,15 +72,6 @@ def cmd_demo(_: argparse.Namespace):
     cmd_health(argparse.Namespace())
 
 
-def cmd_ingest_rapporteur(_: argparse.Namespace):
-    base = Path("atlas_rapporteur/runtime")
-    files = [base / "reports/daily_report.md", base / "exports/leads_ranked.json", base / "audit/rejected_results.json"]
-    for path in files:
-        if path.exists():
-            content = path.read_text(encoding="utf-8")[:1000]
-            raw_store.append_event({"event_id": new_id("event"), "created_at": now_iso(), "kind": "file", "domain": "rapporteur_affaires", "content": content, "source": str(path), "source_url": None, "confidence": 0.7, "evidence_ids": [], "linked_objective_ids": [], "validated_by_human": False, "risk_level": "LOW", "useful_for_future": True, "status": "RAW", "tags": ["rapporteur"], "metadata": {}})
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -93,7 +83,6 @@ def main() -> None:
     sub.add_parser("health").set_defaults(func=cmd_health)
     sub.add_parser("anti-forgetting").set_defaults(func=cmd_anti_forgetting)
     sub.add_parser("demo").set_defaults(func=cmd_demo)
-    sub.add_parser("ingest-rapporteur").set_defaults(func=cmd_ingest_rapporteur)
     args = parser.parse_args(); ensure_runtime_structure(); args.func(args)
 
 if __name__ == "__main__":
