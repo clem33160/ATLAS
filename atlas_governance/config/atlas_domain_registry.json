@@ -5,7 +5,6 @@
     "canonical_role": "governance",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -24,7 +23,6 @@
     "canonical_role": "navigation",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -43,7 +41,6 @@
     "canonical_role": "business_leads",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -62,7 +59,6 @@
     "canonical_role": "artisans",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -81,7 +77,6 @@
     "canonical_role": "legal_collection",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -100,7 +95,6 @@
     "canonical_role": "scoring",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -119,7 +113,6 @@
     "canonical_role": "compliance",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -138,7 +131,6 @@
     "canonical_role": "crm",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -157,7 +149,6 @@
     "canonical_role": "reports",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -176,7 +167,6 @@
     "canonical_role": "search",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -195,7 +185,6 @@
     "canonical_role": "extraction",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -214,7 +203,6 @@
     "canonical_role": "simulation",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -233,7 +221,6 @@
     "canonical_role": "energy",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -252,7 +239,6 @@
     "canonical_role": "system_memory",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [
@@ -271,7 +257,6 @@
     "canonical_role": "tests",
     "allowed_directories": [
       "atlas",
-      "atlas_rapporteur",
       "atlas_governance"
     ],
     "forbidden_directories": [

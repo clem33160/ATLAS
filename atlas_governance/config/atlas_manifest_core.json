@@ -8,17 +8,14 @@
   ],
   "official_directories": [
     "atlas",
-    "atlas_rapporteur",
     "atlas_governance"
   ],
   "canonical_directories": [
     "atlas",
-    "atlas_rapporteur",
     "atlas_governance/config"
   ],
   "runtime_directories": [
     "atlas/runtime",
-    "atlas_rapporteur/runtime",
     "atlas_governance/runtime"
   ],
   "forbidden_canonical_suffixes": [
