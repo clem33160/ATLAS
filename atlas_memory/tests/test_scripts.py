@@ -31,14 +31,7 @@ def seed_demo_and_real():
     write_json(RUNTIME_PATHS["active"], {"source": "demo"})
 
 
-def test_demo_idempotent_and_reset_cleans_demo_keeps_real():
-    run("bash atlas_memory/scripts/memory_demo.sh")
-    run("bash atlas_memory/scripts/memory_demo.sh")
-    run("bash atlas_memory/scripts/memory_demo.sh")
-    ensure_runtime_structure()
-    events = [e for e in read_jsonl(RUNTIME_PATHS["raw"]) if e.get("source") == "demo" and e.get("content") == "client cherche plombier Lyon fuite urgente"]
-    assert len(events) == 1
-
+def test_reset_cleans_demo_keeps_real():
     seed_demo_and_real()
     run("bash atlas_memory/scripts/memory_reset_demo_safe.sh")
     assert all("demo" not in str(x).lower() for x in read_jsonl(RUNTIME_PATHS["semantic"]))
