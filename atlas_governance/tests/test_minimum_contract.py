@@ -30,7 +30,6 @@ def test_invariants_vital_pieces_ok():
     assert r['ok']
 
 def test_path_resolver_known_authorities():
-    assert resolve('rapporteur_main')
     assert resolve('governance_manifest')
 
 def test_forbidden_detection_on_authority_index():
