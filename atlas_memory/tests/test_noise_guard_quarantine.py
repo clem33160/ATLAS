@@ -21,7 +21,7 @@ def test_noise_guard_detects_placeholder_uncertainty():
 
 
 def test_noise_guard_keeps_real_user_event():
-    e = {"source": "user", "content": "Le client veut un devis plomberie Lyon", "domain": "rapporteur_affaires"}
+    e = {"source": "user", "content": "Le client veut un devis plomberie Lyon", "domain": "business_leads"}
     assert should_count_as_real(e) is True
 
 

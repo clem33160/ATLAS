@@ -9,16 +9,16 @@ def test_imports():
 
 def test_core_flow():
     ensure_runtime_structure()
-    ev1 = {"event_id": new_id("event"), "created_at": now_iso(), "kind": "conversation", "domain": "rapporteur_affaires", "content": "client cherche plombier Lyon fuite urgente", "source": "t", "source_url": None, "confidence": 0.9, "evidence_ids": [], "linked_objective_ids": [], "validated_by_human": True, "risk_level": "LOW", "useful_for_future": True, "status": "RAW", "tags": [], "metadata": {}}
+    ev1 = {"event_id": new_id("event"), "created_at": now_iso(), "kind": "conversation", "domain": "business_leads", "content": "client cherche plombier Lyon fuite urgente", "source": "t", "source_url": None, "confidence": 0.9, "evidence_ids": [], "linked_objective_ids": [], "validated_by_human": True, "risk_level": "LOW", "useful_for_future": True, "status": "RAW", "tags": [], "metadata": {}}
     ev2 = {**ev1, "event_id": new_id("event"), "content": "second"}
     raw_store.append_event(ev1); raw_store.append_event(ev2)
     assert len(raw_store.list_events(limit=2)) == 2
     facts = semantic_store.extract_semantic_facts(ev1)
     assert facts.get("trade") == "plomberie" and facts.get("city") == "Lyon"
-    canon_store.promote_to_canon("rapporteur_affaires", ev1["event_id"], "ok", True)
-    canon_store.promote_to_canon("rapporteur_affaires", ev2["event_id"], "ok", True)
-    assert not canon_store.reject_ambiguous_canon("rapporteur_affaires")
-    unc = uncertainty_store.add_uncertainty("rapporteur_affaires", "claim", "proof", 0.2)
+    canon_store.promote_to_canon("business_leads", ev1["event_id"], "ok", True)
+    canon_store.promote_to_canon("business_leads", ev2["event_id"], "ok", True)
+    assert not canon_store.reject_ambiguous_canon("business_leads")
+    unc = uncertainty_store.add_uncertainty("business_leads", "claim", "proof", 0.2)
     assert unc["status"] == "OPEN"
     conflict = conflict_store.open_conflict("a", "b", "x", "y", "d")
     assert conflict_store.resolve_conflict(conflict["conflict_id"], "keep a", "reason")
@@ -37,7 +37,7 @@ def test_core_flow():
     assert rep["memory_score"] < 100
 
 
-def test_privacy_and_rapporteur_ingest_no_crash():
+def test_privacy_rejects_sensitive_preference():
     try:
         self_memory.add_user_preference("password", "123", consent=False)
     except ValueError:
